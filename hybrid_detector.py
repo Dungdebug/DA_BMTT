@@ -33,64 +33,66 @@ class HybridDetector:
         # 3. Tra cứu Threat Intelligence đám mây (VirusTotal)
         cloud_res = self.cloud.lookup_hash(metadata["sha256"])
 
-        # 4. Cơ chế ra quyết định lai (Hybrid Decision Logic)
+        # 4. Cơ chế ra quyết định lai (Hybrid Decision Logic - Weighted Scoring)
         final_verdict = "BENIGN"
-        risk_score = 0.0
         decision_rule = ""
         explanation = ""
 
         cloud_status = cloud_res.get("status")
-        cloud_positives = cloud_res.get("positives", 0)
         cloud_score = cloud_res.get("cloud_score", 0.0)
         ai_conf = ai_res.get("ai_confidence", 0.0)
-        ai_label = ai_res.get("ai_label", "BENIGN")
+        
+        # Tính điểm S_static (dựa trên các dấu hiệu nghi ngờ tĩnh)
+        s_static = 0.0
+        if metadata.get("max_section_entropy", 0) > 7.0:
+            s_static += 0.3
+        if metadata.get("has_suspicious_section", False):
+            s_static += 0.3
+        if metadata.get("size_anomaly_count", 0) > 0:
+            s_static += 0.2
+        if metadata.get("suspicious_api_count", 0) > 3:
+            s_static += 0.2
+            
+        s_static = min(1.0, s_static) # Giới hạn tối đa là 1.0
+        
+        # Tra cứu nhanh Imphash trên CTI (Mô phỏng nâng điểm nếu Imphash giống mã độc biết trước)
+        imphash = metadata.get("imphash", "")
+        # Ví dụ một số imphash nổi tiếng của Ransomware/Trojan
+        ransomware_imphashes = [
+            "f43c3f96614457e5e7ab3d27464ef245", # WannaCry
+            "b34f154ec913d2d2c435cbd644e91687", # Locky
+            "178ce5ce12d3e5e40e69db9e64d7c041", # Emotet
+            "8f3226dbdbf970eabac5ac88a5ea1134"  # Trickbot
+        ]
+        if imphash in ransomware_imphashes:
+            cloud_score = max(cloud_score, 0.90) # Tự động nâng điểm CTI nếu trúng imphash độc hại
+            explanation += f"[!] Cảnh báo CTI: Imphash '{imphash}' trùng khớp với mã độc (Ransomware/Trojan) đã biết. "
 
-        # Trường hợp 1: Đồng thuận đám mây mạnh (Cloud Consensus)
-        if cloud_status == "FOUND" and cloud_positives >= 5:
-            final_verdict = "MALICIOUS"
-            risk_score = max(cloud_score, ai_conf, 0.85)
-            decision_rule = "Cloud Threat Consensus (Đám mây xác thực cao)"
-            explanation = f"Phát hiện bởi {cloud_positives}/{cloud_res.get('total')} hãng bảo mật trên mạng lưới toàn cầu. Chủng loại: {cloud_res.get('threat_classification')}."
-
-        # Trường hợp 2: Đám mây nghi vấn nhẹ (1 đến 4 hãng cảnh báo)
-        elif cloud_status == "FOUND" and cloud_positives >= 1:
-            risk_score = round(0.5 * cloud_score + 0.5 * ai_conf, 4)
-            if ai_label == "MALICIOUS" or risk_score >= 0.50:
-                final_verdict = "MALICIOUS"
-                decision_rule = "Cloud-AI Corroborated Verdict"
-                explanation = "Có cảnh báo từ đám mây kết hợp mô hình AI phát hiện các đặc trưng nguy hiểm trong mã nhị phân."
-            else:
-                final_verdict = "SUSPICIOUS_UNKNOWN"
-                decision_rule = "Low Cloud Detections / Anomaly"
-                explanation = f"Có {cloud_positives} hãng AV cảnh báo nhưng AI đánh giá rủi ro vừa phải. Đưa vào diện tệp lạ cần giám sát."
-
-        # Trường hợp 3: Tệp mới (Zero-Day) hoặc Chế độ Offline / Không có API Key
-        elif cloud_status in ["NOT_FOUND", "NO_API_KEY", "RATE_LIMITED", "NETWORK_ERROR"]:
-            risk_score = ai_conf
-            if ai_label == "MALICIOUS":
-                final_verdict = "MALICIOUS"
-                decision_rule = "Local AI Zero-Day Detection (Mô hình phát hiện mã độc mới)"
-                explanation = "Tệp chưa từng có chữ ký trên đám mây nhưng AI phát hiện các chuỗi đặc trưng tương đồng cao với họ mã độc đã biết."
-            elif ai_label == "SUSPICIOUS_UNKNOWN":
-                final_verdict = "SUSPICIOUS_UNKNOWN"
-                decision_rule = "Local AI Anomaly Detection (Tệp lạ có cấu trúc bất thường)"
-                explanation = "Tệp chưa xuất hiện trên đám mây và sở hữu các đặc trưng bất thường (Entropy cao, hàm API nhạy cảm hoặc cấu trúc nén packer)."
-            else:
-                final_verdict = "BENIGN"
-                decision_rule = "Local AI Benign Verification (Xác minh an toàn tại chỗ)"
-                explanation = "Tệp có cấu trúc tiêu chuẩn, không phát hiện dấu hiệu packer hay hành vi can thiệp hệ thống nguy hiểm."
-
-        # Trường hợp 4: Kết hợp trọng số tiêu chuẩn
+        # CƠ CHẾ TRỌNG SỐ ĐỘNG (Dynamic Weighting)
+        # Nếu file đã có trên Cloud hoặc Cloud phát hiện Imphash
+        if cloud_status == "FOUND" or cloud_score > 0:
+            # Risk Score = 0.25 * S_static + 0.35 * P_ml + 0.40 * S_cti
+            risk_score = round((0.25 * s_static) + (0.35 * ai_conf) + (0.40 * cloud_score), 4)
+            decision_rule = "Weighted Hybrid Decision (Có CTI)"
         else:
-            risk_score = round(0.6 * cloud_score + 0.4 * ai_conf, 4)
-            if risk_score >= 0.65:
-                final_verdict = "MALICIOUS"
-            elif risk_score >= 0.35:
-                final_verdict = "SUSPICIOUS_UNKNOWN"
-            else:
-                final_verdict = "BENIGN"
-            decision_rule = "Weighted Hybrid Decision"
-            explanation = "Đánh giá dựa trên trọng số cân bằng giữa phân tích tĩnh AI và danh tiếng đám mây."
+            # File Zero-day / Không có mạng / Không có Cloud -> Phân bổ lại 40% trọng số của CTI
+            # Static: 0.25 -> 0.40, ML: 0.35 -> 0.60
+            risk_score = round((0.40 * s_static) + (0.60 * ai_conf), 4)
+            decision_rule = "Local Zero-Day Decision (Không có CTI)"
+
+        # Phân loại dựa trên ngưỡng
+        if risk_score >= 0.70:
+            final_verdict = "MALICIOUS"
+            decision_rule += " | Score >= 0.70 (Cách ly)"
+            explanation += "Hệ thống xác định tệp có mức độ rủi ro cao dựa trên tổng hợp phân tích đa tầng."
+        elif risk_score >= 0.40:
+            final_verdict = "SUSPICIOUS_UNKNOWN"
+            decision_rule += " | 0.40 <= Score < 0.70 (Gợi ý Sandbox)"
+            explanation += "Tệp nằm trong vùng nghi ngờ (Suspicious), có chứa các đặc trưng bất thường cần giám sát."
+        else:
+            final_verdict = "BENIGN"
+            decision_rule += " | Score < 0.40 (An toàn)"
+            explanation += "Tệp lành tính, cấu trúc và hành vi được dự đoán an toàn."
 
         # 5. Sinh quy trình ứng phó & kịch bản khắc phục
         remediation = RemediationEngine.generate_playbook(

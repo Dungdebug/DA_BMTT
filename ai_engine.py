@@ -1,6 +1,7 @@
 import os
 import joblib
 import numpy as np
+import pandas as pd
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.preprocessing import StandardScaler
 from sklearn.pipeline import Pipeline
@@ -18,73 +19,72 @@ class AIEngine:
     def __init__(self):
         self.model = self._load_or_create_model()
 
-    def _generate_synthetic_dataset(self):
+    def _load_kaggle_dataset(self):
         """
-        Sinh tập dữ liệu mẫu đại diện cho phân phối đặc trưng thực tế của:
-        - 0: File sạch (Benign)
-        - 1: File mã độc (Malicious)
-        - Hỗ trợ học các pattern tinh vi: packed, memory injection, evasion, trojan dropper.
+        Đọc dữ liệu thật từ file dataset_malwares.csv của Kaggle.
+        Ánh xạ (map) các cột tương ứng với FEATURE_NAMES của AI.
         """
-        np.random.seed(42)
-        X = []
-        y = []
+        import pandas as pd
+        dataset_path = "dataset_malwares.csv"
+        if not os.path.exists(dataset_path):
+            raise FileNotFoundError(f"Không tìm thấy file {dataset_path}. Vui lòng tải về thư mục dự án.")
 
-        # 1. Nhóm Benign (60 mẫu)
-        # Đặc trưng: Entropy vừa phải (4.5 - 6.5), nhiều DLL & hàm thông dụng, không có section lạ
-        for _ in range(60):
-            size = np.random.randint(50_000, 5_000_000)
-            sections = np.random.randint(3, 8)
-            overall_ent = np.random.uniform(4.2, 6.4)
-            max_sec_ent = min(8.0, overall_ent + np.random.uniform(0.1, 0.6))
-            dlls = np.random.randint(5, 25)
-            funcs = np.random.randint(40, 300)
-            has_sus_sec = 0
-            size_anomaly = 0
-            # File sạch hiếm khi gọi API tiêm nhiễm hoặc anti-debug cùng lúc
-            inj = np.random.choice([0, 1], p=[0.9, 0.1])
-            pers = np.random.choice([0, 1], p=[0.85, 0.15])
-            evas = np.random.choice([0, 1], p=[0.85, 0.15])
-            net = np.random.choice([0, 1, 2], p=[0.75, 0.2, 0.05])
-            X.append([size, sections, overall_ent, max_sec_ent, dlls, funcs, has_sus_sec, size_anomaly, inj, pers, evas, net])
-            y.append(0)
-
-        # 2. Nhóm Malicious - Packed / Crypter (35 mẫu)
-        # Đặc trưng: Entropy cực cao (>7.2), ít hàm/DLL do bị giấu, có packer section hoặc size anomaly
-        for _ in range(35):
-            size = np.random.randint(30_000, 800_000)
-            sections = np.random.randint(2, 6)
-            overall_ent = np.random.uniform(7.1, 7.95)
-            max_sec_ent = np.random.uniform(7.4, 7.99)
-            dlls = np.random.randint(1, 4)
-            funcs = np.random.randint(2, 20)
-            has_sus_sec = np.random.choice([0, 1], p=[0.3, 0.7])
-            size_anomaly = np.random.choice([1, 2, 3], p=[0.4, 0.4, 0.2])
-            inj = np.random.randint(1, 4)
-            pers = np.random.choice([0, 1, 2], p=[0.4, 0.4, 0.2])
-            evas = np.random.randint(1, 4)
-            net = np.random.choice([0, 1, 2], p=[0.4, 0.4, 0.2])
-            X.append([size, sections, overall_ent, max_sec_ent, dlls, funcs, has_sus_sec, size_anomaly, inj, pers, evas, net])
-            y.append(1)
-
-        # 3. Nhóm Malicious - Trojan Dropper / Spyware / Ransomware (35 mẫu)
-        # Đặc trưng: Có thể không pack nhưng gọi ồ ạt API tiêm nhiễm, duy trì khởi động, mạng và né tránh debugger
-        for _ in range(35):
-            size = np.random.randint(80_000, 2_000_000)
-            sections = np.random.randint(3, 7)
-            overall_ent = np.random.uniform(6.2, 7.4)
-            max_sec_ent = np.random.uniform(6.6, 7.7)
-            dlls = np.random.randint(3, 10)
-            funcs = np.random.randint(25, 90)
-            has_sus_sec = np.random.choice([0, 1], p=[0.7, 0.3])
-            size_anomaly = np.random.choice([0, 1], p=[0.7, 0.3])
-            inj = np.random.randint(2, 6)
-            pers = np.random.randint(1, 4)
-            evas = np.random.randint(1, 4)
-            net = np.random.randint(1, 4)
-            X.append([size, sections, overall_ent, max_sec_ent, dlls, funcs, has_sus_sec, size_anomaly, inj, pers, evas, net])
-            y.append(1)
-
-        return np.array(X, dtype=np.float32), np.array(y, dtype=int)
+        print("[*] Đang tải tập dữ liệu Kaggle Malware Detection...")
+        df = pd.read_csv(dataset_path)
+        
+        # Map các cột từ Kaggle dataset sang 12 features của chúng ta
+        X_mapped = pd.DataFrame()
+        X_mapped['file_size'] = df['SizeOfImage']
+        X_mapped['num_sections'] = df['NumberOfSections']
+        
+        # Giả lập overall_entropy từ trung bình của SectionMin và SectionMax
+        X_mapped['overall_entropy'] = df['SectionMinEntropy'] + (df['SectionMaxEntropy'] - df['SectionMinEntropy']) / 2
+        X_mapped['max_sec_entropy'] = df['SectionMaxEntropy']
+        
+        X_mapped['num_imported_dlls'] = df['DirectoryEntryImport']
+        X_mapped['num_imported_funcs'] = df['DirectoryEntryImportSize'] if 'DirectoryEntryImportSize' in df.columns else df['DirectoryEntryImport'] * 5
+        X_mapped['has_suspicious_section'] = df['SuspiciousNameSection']
+        
+        # Kiểm tra nếu dung lượng ảo lớn hơn dung lượng thực tế
+        X_mapped['size_anomaly_count'] = (df['SectionMaxVirtualsize'] > df['SectionMaxRawsize']).astype(int)
+        
+        # Chia các hàm import đáng ngờ thành các nhóm API (tiêm nhiễm, né tránh...)
+        X_mapped['count_injection_apis'] = (df['SuspiciousImportFunctions'] / 3).astype(int)
+        X_mapped['count_persistence_apis'] = (df['SuspiciousImportFunctions'] / 4).astype(int)
+        X_mapped['count_evasion_apis'] = (df['SuspiciousImportFunctions'] / 4).astype(int)
+        X_mapped['count_network_apis'] = (df['SuspiciousImportFunctions'] / 5).astype(int)
+        
+        X = X_mapped.values.astype(np.float32)
+        y = df['Malware'].values.astype(int)
+        print(f"[*] Đã tải xong {len(df)} mẫu dữ liệu gốc!")
+        
+        # CƠ CHẾ MỚI: Hỗ trợ nạp thêm dữ liệu tệp sạch (Benign) để huấn luyện cùng
+        extra_benign_path = "extra_benign_dataset.csv"
+        if os.path.exists(extra_benign_path):
+            print(f"[*] Đang gộp thêm dữ liệu tệp sạch từ {extra_benign_path}...")
+            df_b = pd.read_csv(extra_benign_path)
+            
+            X_b = pd.DataFrame()
+            X_b['file_size'] = df_b['SizeOfImage']
+            X_b['num_sections'] = df_b['NumberOfSections']
+            X_b['overall_entropy'] = df_b['SectionMinEntropy'] + (df_b['SectionMaxEntropy'] - df_b['SectionMinEntropy']) / 2
+            X_b['max_sec_entropy'] = df_b['SectionMaxEntropy']
+            X_b['num_imported_dlls'] = df_b['DirectoryEntryImport']
+            X_b['num_imported_funcs'] = df_b['DirectoryEntryImportSize'] if 'DirectoryEntryImportSize' in df_b.columns else df_b['DirectoryEntryImport'] * 5
+            X_b['has_suspicious_section'] = df_b['SuspiciousNameSection']
+            X_b['size_anomaly_count'] = (df_b['SectionMaxVirtualsize'] > df_b['SectionMaxRawsize']).astype(int)
+            X_b['count_injection_apis'] = (df_b['SuspiciousImportFunctions'] / 3).astype(int)
+            X_b['count_persistence_apis'] = (df_b['SuspiciousImportFunctions'] / 4).astype(int)
+            X_b['count_evasion_apis'] = (df_b['SuspiciousImportFunctions'] / 4).astype(int)
+            X_b['count_network_apis'] = (df_b['SuspiciousImportFunctions'] / 5).astype(int)
+            
+            X = np.vstack((X, X_b.values.astype(np.float32)))
+            # Dán nhãn 0 (File sạch) cho toàn bộ các file trong tập dữ liệu phụ này
+            y_b = np.zeros(len(df_b), dtype=int) 
+            y = np.concatenate((y, y_b))
+            print(f"[*] Đã trộn thành công thêm {len(df_b)} mẫu tệp sạch. Tổng số mẫu hiện tại: {len(y)}")
+            
+        return X, y
 
     def _load_or_create_model(self):
         """Khởi tạo hoặc tải mô hình RandomForest với Pipeline chuẩn hóa."""
@@ -98,7 +98,7 @@ class AIEngine:
                 pass
 
         # Huấn luyện mô hình chuẩn
-        X, y = self._generate_synthetic_dataset()
+        X, y = self._load_kaggle_dataset()
         pipeline = Pipeline([
             ("scaler", StandardScaler()),
             ("rf", RandomForestClassifier(n_estimators=100, max_depth=8, random_state=42))
