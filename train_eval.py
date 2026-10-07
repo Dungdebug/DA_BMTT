@@ -53,7 +53,7 @@ def main():
     print("====================================================")
     
     # Lưu mô hình
-    model_path = "malware_rf_model.pkl"
+    model_path = "models/malware_rf_model.pkl"
     joblib.dump(pipeline, model_path)
     print(f"[+] Đã lưu mô hình mới tại: {model_path}")
     print("[+] AI đã sẵn sàng để phát hiện mã độc!")

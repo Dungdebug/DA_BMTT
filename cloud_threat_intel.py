@@ -3,7 +3,7 @@ import os
 import requests
 from datetime import datetime
 
-CACHE_FILE = "vt_cache.json"
+CACHE_FILE = "cache/vt_cache.json"
 
 class CloudThreatIntel:
     # Cơ sở dữ liệu mẫu uy tín cho Demo thuyết trình (WannaCry, Emotet, Clean Notepad...)

@@ -6,7 +6,7 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.preprocessing import StandardScaler
 from sklearn.pipeline import Pipeline
 
-MODEL_FILE = "malware_rf_model.pkl"
+MODEL_FILE = "models/malware_rf_model.pkl"
 
 class AIEngine:
     FEATURE_NAMES = [
@@ -25,7 +25,7 @@ class AIEngine:
         Ánh xạ (map) các cột tương ứng với FEATURE_NAMES của AI.
         """
         import pandas as pd
-        dataset_path = "dataset_malwares.csv"
+        dataset_path = "data/dataset_malwares.csv"
         if not os.path.exists(dataset_path):
             raise FileNotFoundError(f"Không tìm thấy file {dataset_path}. Vui lòng tải về thư mục dự án.")
 

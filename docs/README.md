@@ -199,6 +199,16 @@ Xây dựng giao diện Dark Mode phong cách Trung tâm điều hành an ninh m
 ```
 DA_BMTT/
 ├── .venv/                      # Môi trường ảo Python (Đã cài sẵn thư viện)
+├── cache/                      # Thư mục chứa bộ nhớ đệm
+│   └── vt_cache.json           # Bộ nhớ đệm cache kết quả VirusTotal
+├── data/                       # Thư mục chứa dữ liệu huấn luyện
+│   ├── benign_dataset.csv      # Tập dữ liệu mẫu sạch
+│   └── dataset_malwares.csv    # Tập dữ liệu mã độc Kaggle
+├── docs/                       # Thư mục chứa tài liệu
+│   ├── architecture_design.md  # Thiết kế kiến trúc
+│   └── README_Overview.md      # Tổng quan dự án
+├── models/                     # Thư mục chứa mô hình AI
+│   └── malware_rf_model.pkl    # Tệp mô hình Machine Learning đã huấn luyện sẵn
 ├── static/                     # Tài nguyên giao diện người dùng
 │   ├── css/
 │   │   └── style.css           # Giao diện Cyber Security Dark Mode hiện đại
@@ -209,11 +219,11 @@ DA_BMTT/
 ├── ai_engine.py                # Mô-đun AI Random Forest + XAI Heuristics
 ├── app.py                      # Máy chủ Flask Backend & RESTful API
 ├── cloud_threat_intel.py       # Mô-đun tra cứu đám mây VirusTotal API v3 & Cache
+├── extract_benign.py           # Script hỗ trợ trích xuất dữ liệu sạch
 ├── hybrid_detector.py          # Động cơ phán quyết lai kết hợp Static + AI + Cloud
 ├── remediation_engine.py       # Mô-đun ứng phó sự cố & sinh script PowerShell
 ├── static_analyzer.py          # Bóc tách cấu trúc PE, Entropy, Packer, nhạy cảm API
-├── malware_rf_model.pkl        # Tệp mô hình Machine Learning đã huấn luyện sẵn
-├── vt_cache.json               # Bộ nhớ đệm cache kết quả VirusTotal
+├── train_eval.py               # Script hỗ trợ huấn luyện và đánh giá mô hình
 ├── sample.exe                  # Mẫu tệp thực thi dùng để kiểm thử
 ├── requirements.txt            # Danh sách các thư viện Python phụ thuộc
 ├── run_app.bat                 # File tiện ích 1-Click khởi chạy ứng dụng
