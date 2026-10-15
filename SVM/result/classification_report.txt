@@ -1,0 +1,23 @@
+BÁO CÁO KẾT QUẢ THUẬT TOÁN SUPPORT VECTOR MACHINE (SVM)
+============================================================
+
+Accuracy : 93.18%
+Precision: 94.16%
+Recall   : 94.35%
+F1-Score : 94.25%
+ROC-AUC  : 0.9705
+Log Loss : 0.1997
+Latency  : 0.3773 ms/mẫu
+
+BÁO CÁO CHI TIẾT:
+                  precision    recall  f1-score   support
+
+   Sạch (Benign)     0.9175    0.9147    0.9161      2005
+Mã độc (Malware)     0.9416    0.9435    0.9425      2920
+
+        accuracy                         0.9318      4925
+       macro avg     0.9295    0.9291    0.9293      4925
+    weighted avg     0.9317    0.9318    0.9318      4925
+
+
+MA TRẬN NHẦM LẪN: TN=1834, FP=171, FN=165, TP=2755

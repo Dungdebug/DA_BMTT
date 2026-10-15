@@ -1,5 +1,6 @@
 import os
 import sys
+import json
 import shutil
 import tempfile
 from flask import Flask, render_template, request, jsonify, Response, send_file
@@ -106,9 +107,10 @@ def _generate_mock_wannacry_report(detector, demo_info):
     sha256 = demo_info["simulated_hash"]
     cloud_res = detector.cloud.lookup_hash(sha256)
     
-    # Tạo vector đặc trưng mô phỏng ransomware
+    # Tạo vector 20 đặc trưng mô phỏng ransomware
     feat_vector = np.array([
-        3514368, 4, 7.55, 7.82, 4, 18, 0, 1, 3, 2, 2, 2
+        3514368, 4, 7.55, 7.82, 4, 18, 0, 1, 3, 2, 2, 2,
+        258, 0, 2, 150000, 3200000, 4096, 45056, 0
     ], dtype=np.float32)
     ai_res = detector.ai.predict(feat_vector)
 
@@ -176,9 +178,10 @@ def _generate_mock_zeroday_report(detector, demo_info):
         "source": "VirusTotal (Hash Not Found - Zero-Day Candidate)"
     }
 
-    # Vector đặc trưng mô phỏng mã độc nén Zero-Day
+    # Vector 20 đặc trưng mô phỏng mã độc nén Zero-Day
     feat_vector = np.array([
-        185400, 3, 7.84, 7.95, 2, 8, 1, 2, 2, 1, 2, 1
+        185400, 3, 7.84, 7.95, 2, 8, 1, 2, 2, 1, 2, 1,
+        258, 0, 2, 60000, 5400, 4096, 61440, 0
     ], dtype=np.float32)
     ai_res = detector.ai.predict(feat_vector)
 
@@ -245,8 +248,10 @@ def _generate_mock_benign_report(detector, demo_info):
         "source": "VirusTotal Cloud Verified"
     }
 
+    # Vector 20 đặc trưng mô phỏng tệp sạch (có ASLR, DEP, chữ ký số hợp lệ)
     feat_vector = np.array([
-        450560, 6, 5.82, 6.45, 12, 142, 0, 0, 0, 0, 0, 0
+        57344, 3, 0.04, 0.0, 1, 1, 0, 0, 0, 0, 0, 0,
+        8450, 34112, 3, 25600, 2048, 8192, 33694, 1
     ], dtype=np.float32)
     ai_res = detector.ai.predict(feat_vector)
 
@@ -323,6 +328,36 @@ def download_script():
         mimetype="text/plain",
         headers={"Content-Disposition": f"attachment;filename={filename}"}
     )
+
+@app.route("/api/models/comparison", methods=["GET"])
+def get_models_comparison():
+    rf_json_path = os.path.join("RandomForest", "result", "metrics_summary.json")
+    svm_json_path = os.path.join("SVM", "result", "metrics_summary.json")
+    
+    rf_data = {}
+    svm_data = {}
+    if os.path.exists(rf_json_path):
+        with open(rf_json_path, "r", encoding="utf-8") as f:
+            rf_data = json.load(f)
+    if os.path.exists(svm_json_path):
+        with open(svm_json_path, "r", encoding="utf-8") as f:
+            svm_data = json.load(f)
+            
+    return jsonify({
+        "status": "success",
+        "models": {
+            "Random Forest": rf_data.get("performance_metrics", {}),
+            "Support Vector Machine (SVM)": svm_data.get("performance_metrics", {})
+        },
+        "confusion_matrix": {
+            "Random Forest": rf_data.get("confusion_matrix", {}),
+            "Support Vector Machine (SVM)": svm_data.get("confusion_matrix", {})
+        },
+        "roc_curve": {
+            "Random Forest": rf_data.get("roc_curve", {}),
+            "Support Vector Machine (SVM)": svm_data.get("roc_curve", {})
+        }
+    })
 
 if __name__ == "__main__":
     print("Khởi chạy Web Dashboard Hệ thống Phát hiện Mã độc Lai tại http://127.0.0.1:5000")

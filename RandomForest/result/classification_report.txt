@@ -1,0 +1,23 @@
+BÁO CÁO KẾT QUẢ THUẬT TOÁN RANDOM FOREST
+============================================================
+
+Accuracy : 97.75%
+Precision: 98.08%
+Recall   : 98.12%
+F1-Score : 98.10%
+ROC-AUC  : 0.9963
+Log Loss : 0.0737
+Latency  : 0.0322 ms/mẫu
+
+BÁO CÁO CHI TIẾT:
+                  precision    recall  f1-score   support
+
+   Sạch (Benign)     0.9726    0.9721    0.9723      2005
+Mã độc (Malware)     0.9808    0.9812    0.9810      2920
+
+        accuracy                         0.9775      4925
+       macro avg     0.9767    0.9766    0.9767      4925
+    weighted avg     0.9775    0.9775    0.9775      4925
+
+
+MA TRẬN NHẦM LẪN: TN=1949, FP=56, FN=55, TP=2865

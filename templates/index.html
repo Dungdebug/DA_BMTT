@@ -9,6 +9,8 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/static/css/style.css">
+    <!-- Chart.js CDN để vẽ biểu đồ so sánh đường đi và hiệu năng -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
     <div class="cyber-background"></div>
@@ -26,7 +28,7 @@
                 </div>
                 <div>
                     <h1 class="logo-title">HYBRID THREAT DEFENDER</h1>
-                    <p class="logo-subtitle">Hệ thống Phát hiện Mã độc Lai: Phân tích Tĩnh + AI Heuristics + Tri thức Đám mây</p>
+                    <p class="logo-subtitle">Hệ thống Phát hiện Mã độc Lai: Phân tích Tĩnh + AI Heuristics (Random Forest & SVM) + Tri thức Đám mây</p>
                 </div>
             </div>
             <div class="header-controls">
@@ -48,19 +50,46 @@
             <div class="badge-topic">ĐỀ TÀI AN TOÀN THÔNG TIN</div>
             <h2 class="topic-title">"Phát hiện file chứa mã độc dựa vào phương pháp lai kết hợp giữa phân tích tĩnh tại chỗ và tra cứu tri thức mối đe dọa đám mây"</h2>
             <div class="topic-tags">
-                <span class="tag">Static Binary Inspection</span>
+                <span class="tag">Static Binary & Source Inspection</span>
+                <span class="tag">Dual-AI: Random Forest & SVM</span>
                 <span class="tag">PE Shannon Entropy</span>
-                <span class="tag">Machine Learning Heuristics</span>
                 <span class="tag">Zero-Day Anomaly Detection</span>
                 <span class="tag">Cloud Threat Intel (VirusTotal)</span>
                 <span class="tag">Automated Incident Remediation</span>
             </div>
         </section>
 
+        <!-- 3-Step Process Flow Visualizer -->
+        <div class="process-steps-bar">
+            <div class="process-step-item active">
+                <div class="step-icon-circle">1</div>
+                <div class="step-text">
+                    <strong>BƯỚC 1: Phân Tích Tại Chỗ</strong>
+                    <span>Bóc tách PE/Mã nguồn, Entropy, Hashes & APIs</span>
+                </div>
+            </div>
+            <div class="step-connector"></div>
+            <div class="process-step-item active">
+                <div class="step-icon-circle">2</div>
+                <div class="step-text">
+                    <strong>BƯỚC 2: Tri Thức Đám Mây</strong>
+                    <span>Tra cứu VirusTotal & Imphash CTI toàn cầu</span>
+                </div>
+            </div>
+            <div class="step-connector"></div>
+            <div class="process-step-item active">
+                <div class="step-icon-circle">3</div>
+                <div class="step-text">
+                    <strong>BƯỚC 3: AI Random Forest & SVM</strong>
+                    <span>Học máy đối chiếu 2 mô hình & Xếp hạng rủi ro</span>
+                </div>
+            </div>
+        </div>
+
         <!-- Upload & Quick Demo Panel -->
         <section class="scanner-section">
             <div class="drop-zone" id="dropZone">
-                <input type="file" id="fileInput" class="file-input" accept=".exe,.dll,.sys,.bin,*">
+                <input type="file" id="fileInput" class="file-input" accept=".exe,.dll,.sys,.bin,.py,.js,.bat,.ps1,.vbs,.sh,.c,.cpp,.txt,*">
                 <div class="drop-content">
                     <div class="radar-circle">
                         <svg class="upload-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -69,8 +98,8 @@
                             <line x1="12" y1="3" x2="12" y2="15"/>
                         </svg>
                     </div>
-                    <h3>Kéo thả tệp thực thi (.exe, .dll...) vào đây để quét</h3>
-                    <p class="drop-hint">Hỗ trợ trích xuất cấu trúc PE, Entropy, mã băm SHA-256 và suy luận AI tự động</p>
+                    <h3>Kéo thả tệp nhị phân (.exe, .dll...) hoặc tệp mã nguồn (.py, .js, .bat, .ps1...) vào đây để quét</h3>
+                    <p class="drop-hint">Hệ thống tự động chạy qua 3 bước: Phân tích tại chỗ ➔ Tra cứu đám mây ➔ Dự đoán & đối chiếu AI (Random Forest vs SVM)</p>
                     <button class="btn-browse" onclick="document.getElementById('fileInput').click()">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
                         Chọn Tệp Từ Máy Tính
@@ -260,23 +289,216 @@
                     </div>
                 </div>
 
-                <!-- TAB 2: AI & XAI -->
+                <!-- TAB 2: AI & DUAL-MODEL COMPARISON (RANDOM FOREST VS SVM) -->
                 <div class="tab-pane" id="tabAI">
-                    <div class="ai-overview-grid">
-                        <div class="ai-stat-card">
-                            <div class="stat-lbl">XÁC SUẤT MÃ ĐỘC (AI CONFIDENCE)</div>
-                            <div class="stat-value-huge" id="aiConfVal">89.4%</div>
-                            <div class="stat-bar-track">
-                                <div class="stat-bar-fill" id="aiConfBar" style="width: 89.4%"></div>
-                            </div>
-                        </div>
-                        <div class="ai-stat-card">
-                            <div class="stat-lbl">PHÂN LOẠI MÔ HÌNH HỌC MÁY</div>
-                            <div class="ai-badge-class" id="aiClassBadge">SUSPICIOUS_UNKNOWN</div>
-                            <p class="ai-class-desc" id="aiClassDesc">Mô hình phát hiện các bất thường về entropy và API can thiệp bộ nhớ nhạy cảm.</p>
+                    <!-- Status consensus banner -->
+                    <div class="consensus-banner" id="consensusBanner">
+                        <div class="consensus-icon">⚖️</div>
+                        <div class="consensus-text">
+                            <h4 id="consensusStatus">Đang phân tích đối chiếu song song 2 thuật toán AI...</h4>
+                            <p id="consensusDesc">Hệ thống áp dụng cả Random Forest (Ensemble Tree) và Support Vector Machine (SVM Kernel RBF) để kiểm tra chéo độ tin cậy.</p>
                         </div>
                     </div>
 
+                    <!-- Dual Model Cards -->
+                    <div class="dual-ai-grid">
+                        <!-- Model 1: Random Forest Card -->
+                        <div class="model-card rf-card">
+                            <div class="model-card-header">
+                                <div class="model-badge rf-badge">🏆 THUẬT TOÁN 1 (KHUYÊN DÙNG)</div>
+                                <span class="model-latency" id="rfLatency">⚡ 0.0106 ms</span>
+                            </div>
+                            <h3 class="model-title">Random Forest Classifier</h3>
+                            <p class="model-desc">Rừng ngẫu nhiên 100 cây quyết định, phân loại phi tuyến tính tốc độ cao.</p>
+                            
+                            <div class="model-prob-box">
+                                <span class="prob-lbl">Xác Suất Mã Độc (RF)</span>
+                                <span class="prob-num" id="rfProbVal">94.4%</span>
+                                <div class="prob-bar-track">
+                                    <div class="prob-bar-fill rf-fill" id="rfProbBar" style="width: 94.4%"></div>
+                                </div>
+                            </div>
+
+                            <div class="model-verdict-row">
+                                <span>Phán quyết RF:</span>
+                                <strong class="badge-verdict-mini" id="rfVerdictBadge">MALICIOUS</strong>
+                            </div>
+
+                            <div class="model-metrics-mini">
+                                <div><span>Accuracy</span><strong id="rfAcc">94.42%</strong></div>
+                                <div><span>F1-Score</span><strong id="rfF1">95.18%</strong></div>
+                                <div><span>ROC-AUC</span><strong id="rfAuc">0.9816</strong></div>
+                            </div>
+                        </div>
+
+                        <!-- Model 2: SVM Card -->
+                        <div class="model-card svm-card">
+                            <div class="model-card-header">
+                                <div class="model-badge svm-badge">THUẬT TOÁN 2 (ĐỐI CHỨNG)</div>
+                                <span class="model-latency" id="svmLatency">⏱️ 0.7796 ms</span>
+                            </div>
+                            <h3 class="model-title">Support Vector Machine (SVM)</h3>
+                            <p class="model-desc">Kernel RBF tối ưu hóa siêu phẳng phân cách cực đại (Maximum Margin Hyperplane).</p>
+                            
+                            <div class="model-prob-box">
+                                <span class="prob-lbl">Xác Suất Mã Độc (SVM)</span>
+                                <span class="prob-num" id="svmProbVal">84.8%</span>
+                                <div class="prob-bar-track">
+                                    <div class="prob-bar-fill svm-fill" id="svmProbBar" style="width: 84.8%"></div>
+                                </div>
+                            </div>
+
+                            <div class="model-verdict-row">
+                                <span>Phán quyết SVM:</span>
+                                <strong class="badge-verdict-mini" id="svmVerdictBadge">MALICIOUS</strong>
+                            </div>
+
+                            <div class="model-metrics-mini">
+                                <div><span>Accuracy</span><strong id="svmAcc">84.79%</strong></div>
+                                <div><span>F1-Score</span><strong id="svmF1">87.14%</strong></div>
+                                <div><span>ROC-AUC</span><strong id="svmAuc">0.9164</strong></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Side-by-Side Detailed Metrics Comparison Table -->
+                    <div class="comparison-table-card">
+                        <div class="card-section-title">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 20V10"/><path d="M12 20V4"/><path d="M6 20v-6"/></svg>
+                            <h4>Bảng Chỉ Số Đối Chiếu So Sánh Hai Thuật Toán AI (Random Forest vs SVM)</h4>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="data-table comp-table">
+                                <thead>
+                                    <tr>
+                                        <th>Tiêu Chí Đo Lường (Metric)</th>
+                                        <th class="th-rf">▲ Random Forest (Tăng ngon - Cao hơn)</th>
+                                        <th class="th-svm">▼ Support Vector Machine (Giảm thấp hơn)</th>
+                                        <th>Đánh Giá Chênh Lệch Thực Tế</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="compTableBody">
+                                    <!-- Phân hệ 1: Phát hiện Mã Độc -->
+                                    <tr class="table-section-row">
+                                        <th colspan="4" style="background: rgba(56, 189, 248, 0.12); color: #38bdf8; font-size: 0.82rem; letter-spacing: 0.5px; padding: 10px 14px;">
+                                            🛡️ PHÂN HỆ 1: ĐO LƯỜNG NĂNG LỰC PHÁT HIỆN MÃ ĐỘC (Tổng 2,920 mẫu mã độc thực tế)
+                                        </th>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Số mã độc bắt trúng (True Positives)</strong></td>
+                                        <td class="td-rf">2,865 mẫu (98.12%)</td>
+                                        <td class="td-svm">2,755 mẫu (94.35%)</td>
+                                        <td><span class="badge-win-green">▲ RF bắt nhiều hơn +110 mẫu (+3.77%)</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Số mã độc lọt lưới (False Negatives)</strong></td>
+                                        <td class="td-rf">55 mẫu (1.88%)</td>
+                                        <td class="td-svm">165 mẫu (5.65%)</td>
+                                        <td><span class="badge-win-green">▲ RF ít lọt hơn 110 mẫu (SVM lọt gấp 3.0 lần)</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Tỷ lệ bao phủ mã độc (Recall / Sensitivity)</strong></td>
+                                        <td class="td-rf">98.12%</td>
+                                        <td class="td-svm">94.35%</td>
+                                        <td><span class="badge-win-green">▲ RF cao hơn +3.77%</span></td>
+                                    </tr>
+
+                                    <!-- Phân hệ 2: Nhận diện Mã Sạch -->
+                                    <tr class="table-section-row">
+                                        <th colspan="4" style="background: rgba(16, 185, 129, 0.12); color: #10b981; font-size: 0.82rem; letter-spacing: 0.5px; padding: 10px 14px;">
+                                            🟢 PHÂN HỆ 2: ĐO LƯỜNG NĂNG LỰC NHẬN DIỆN MÃ SẠCH (Tổng 2,005 mẫu sạch thực tế)
+                                        </th>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Số mã sạch xác nhận đúng (True Negatives)</strong></td>
+                                        <td class="td-rf">1,949 mẫu (97.21%)</td>
+                                        <td class="td-svm">1,834 mẫu (91.47%)</td>
+                                        <td><span class="badge-win-green">▲ RF nhận đúng nhiều hơn +115 mẫu (+5.74%)</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Báo động nhầm mã sạch (False Positives)</strong></td>
+                                        <td class="td-rf">56 mẫu (2.79%)</td>
+                                        <td class="td-svm">171 mẫu (8.53%)</td>
+                                        <td><span class="badge-win-green">▲ RF ít nhầm hơn 115 mẫu (SVM chặn oan gấp 3.1 lần)</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Độ đặc hiệu mã sạch (Specificity / TNR)</strong></td>
+                                        <td class="td-rf">97.21%</td>
+                                        <td class="td-svm">91.47%</td>
+                                        <td><span class="badge-win-green">▲ RF chuẩn xác hơn +5.74%</span></td>
+                                    </tr>
+
+                                    <!-- Phân hệ 3: Hiệu năng tổng thể & Tốc độ -->
+                                    <tr class="table-section-row">
+                                        <th colspan="4" style="background: rgba(245, 158, 11, 0.12); color: #f59e0b; font-size: 0.82rem; letter-spacing: 0.5px; padding: 10px 14px;">
+                                            ⚡ PHÂN HỆ 3: HIỆU NĂNG TỔNG THỂ & TỐC ĐỘ VẬN HÀNH (4,925 mẫu kiểm thử)
+                                        </th>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Độ chính xác tổng thể (Accuracy)</strong></td>
+                                        <td class="td-rf">97.75%</td>
+                                        <td class="td-svm">93.18%</td>
+                                        <td><span class="badge-win-green">▲ RF cao hơn +4.57%</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Độ chuẩn xác (Precision)</strong></td>
+                                        <td class="td-rf">98.08%</td>
+                                        <td class="td-svm">94.16%</td>
+                                        <td><span class="badge-win-green">▲ RF cao hơn +3.92%</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Điểm F1-Score (Cân bằng P/R)</strong></td>
+                                        <td class="td-rf">98.10%</td>
+                                        <td class="td-svm">94.25%</td>
+                                        <td><span class="badge-win-green">▲ RF cao hơn +3.85%</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Đường cong ROC-AUC</strong></td>
+                                        <td class="td-rf">0.9963</td>
+                                        <td class="td-svm">0.9705</td>
+                                        <td><span class="badge-win-green">▲ RF cao hơn +0.0258</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Tốc độ suy luận (Inference Latency)</strong></td>
+                                        <td class="td-rf" id="tblRfLatency">0.0322 ms/mẫu</td>
+                                        <td class="td-svm" id="tblSvmLatency">0.3773 ms/mẫu</td>
+                                        <td><span class="badge-win-green">▲ RF nhanh hơn gấp ~12 lần</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Thời gian huấn luyện trên 24k mẫu</strong></td>
+                                        <td class="td-rf">0.66 giây (Đa nhân CPU)</td>
+                                        <td class="td-svm">14.25 giây</td>
+                                        <td><span class="badge-win-green">▲ RF huấn luyện nhanh hơn ~22 lần</span></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Visual Charts: ROC Curve & Metrics Comparison -->
+                    <div class="charts-comparison-grid">
+                        <div class="chart-box">
+                            <div class="chart-header">
+                                <h5>📈 Biểu Đồ So Sánh Đường Đi: Đường Cong ROC (Receiver Operating Characteristic)</h5>
+                                <span class="chart-sub">Đường đi phân định giữa tỷ lệ phát hiện đúng (TPR) và báo động nhầm (FPR)</span>
+                            </div>
+                            <div class="chart-canvas-wrap">
+                                <canvas id="rocComparisonCanvas"></canvas>
+                            </div>
+                        </div>
+
+                        <div class="chart-box">
+                            <div class="chart-header">
+                                <h5>📊 Biểu Đồ Đối Chiếu 5 Trục Hiệu Năng Chính (Radar/Bar Comparison)</h5>
+                                <span class="chart-sub">So sánh toàn diện: Accuracy, Precision, Recall, F1-Score, ROC-AUC</span>
+                            </div>
+                            <div class="chart-canvas-wrap">
+                                <canvas id="metricsComparisonCanvas"></canvas>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- XAI Explanation -->
                     <div class="xai-box">
                         <h4 class="xai-title">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>

@@ -1,0 +1,13 @@
+﻿Phân hệ,Chỉ số (Metric),Random Forest,SVM (RBF),Mô hình tốt hơn,Chênh lệch thực tế
+PHÂN HỆ 1,Số mã độc bắt trúng (True Positives),"2,865 mẫu (98.12%)","2,755 mẫu (94.35%)",Random Forest,RF bắt trúng nhiều hơn +110 mẫu (+3.77%)
+PHÂN HỆ 1,Số mã độc lọt lưới (False Negatives),55 mẫu (1.88%),165 mẫu (5.65%),Random Forest,RF ít lọt lưới hơn 110 mẫu (SVM lọt gấp 3.0 lần)
+PHÂN HỆ 1,Tỷ lệ bao phủ mã độc (Recall/Sensitivity),98.12%,94.35%,Random Forest,RF cao hơn +3.77%
+PHÂN HỆ 2,Số mã sạch xác nhận đúng (True Negatives),"1,949 mẫu (97.21%)","1,834 mẫu (91.47%)",Random Forest,RF nhận đúng nhiều hơn +115 mẫu (+5.74%)
+PHÂN HỆ 2,Báo động nhầm mã sạch (False Positives),56 mẫu (2.79%),171 mẫu (8.53%),Random Forest,RF ít nhầm hơn 115 mẫu (SVM chặn oan gấp 3.1 lần)
+PHÂN HỆ 2,Độ đặc hiệu mã sạch (Specificity / TNR),97.21%,91.47%,Random Forest,RF chuẩn xác hơn +5.74%
+PHÂN HỆ 3,Độ chính xác tổng thể (Accuracy),97.75%,93.18%,Random Forest,RF cao hơn +4.57%
+PHÂN HỆ 3,Độ chuẩn xác (Precision),98.08%,94.16%,Random Forest,RF cao hơn +3.92%
+PHÂN HỆ 3,F1-Score (Cân bằng Precision/Recall),98.10%,94.25%,Random Forest,RF cao hơn +3.85%
+PHÂN HỆ 3,Diện tích đường cong ROC-AUC,0.9963,0.9705,Random Forest,RF cao hơn +0.0258
+PHÂN HỆ 3,Tốc độ dự đoán (Inference Latency),0.0322 ms/mẫu,0.3773 ms/mẫu,Random Forest,RF nhanh hơn gấp ~11.7 lần
+PHÂN HỆ 3,Thời gian huấn luyện trên 24k mẫu,0.66 s,14.25 s,Random Forest,RF huấn luyện nhanh hơn gấp ~21.6 lần
