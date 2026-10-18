@@ -332,13 +332,18 @@ def download_script():
 @app.route("/api/models/comparison", methods=["GET"])
 def get_models_comparison():
     rf_json_path = os.path.join("RandomForest", "result", "metrics_summary.json")
+    knn_json_path = os.path.join("KNN", "result", "metrics_summary.json")
     svm_json_path = os.path.join("SVM", "result", "metrics_summary.json")
     
     rf_data = {}
+    knn_data = {}
     svm_data = {}
     if os.path.exists(rf_json_path):
         with open(rf_json_path, "r", encoding="utf-8") as f:
             rf_data = json.load(f)
+    if os.path.exists(knn_json_path):
+        with open(knn_json_path, "r", encoding="utf-8") as f:
+            knn_data = json.load(f)
     if os.path.exists(svm_json_path):
         with open(svm_json_path, "r", encoding="utf-8") as f:
             svm_data = json.load(f)
@@ -347,14 +352,17 @@ def get_models_comparison():
         "status": "success",
         "models": {
             "Random Forest": rf_data.get("performance_metrics", {}),
+            "K-Nearest Neighbors (KNN)": knn_data.get("performance_metrics", {}),
             "Support Vector Machine (SVM)": svm_data.get("performance_metrics", {})
         },
         "confusion_matrix": {
             "Random Forest": rf_data.get("confusion_matrix", {}),
+            "K-Nearest Neighbors (KNN)": knn_data.get("confusion_matrix", {}),
             "Support Vector Machine (SVM)": svm_data.get("confusion_matrix", {})
         },
         "roc_curve": {
             "Random Forest": rf_data.get("roc_curve", {}),
+            "K-Nearest Neighbors (KNN)": knn_data.get("roc_curve", {}),
             "Support Vector Machine (SVM)": svm_data.get("roc_curve", {})
         }
     })

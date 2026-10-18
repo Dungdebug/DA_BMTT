@@ -1,6 +1,6 @@
 {
     "algorithm": "SupportVectorMachine",
-    "timestamp": "2026-10-15 08:26:58",
+    "timestamp": "2026-10-17 15:06:31",
     "hyperparameters": {
         "algorithm": "SupportVectorMachine (SVC)",
         "kernel": "rbf",
@@ -17,8 +17,8 @@
         "f1_score": 0.9425,
         "roc_auc": 0.9705,
         "log_loss": 0.1997,
-        "training_time_seconds": 14.25,
-        "inference_latency_ms_per_sample": 0.3773
+        "training_time_seconds": 14.14,
+        "inference_latency_ms_per_sample": 0.4009
     },
     "confusion_matrix": {
         "true_negatives": 1834,

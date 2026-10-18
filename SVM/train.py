@@ -267,6 +267,10 @@ def main():
     # Model
     model_path = os.path.join(RESULT_DIR, "svm_model.pkl")
     joblib.dump(pipeline, model_path)
+    # Đồng bộ ra models/ chính
+    models_dir = os.path.join(ROOT_DIR, "models")
+    os.makedirs(models_dir, exist_ok=True)
+    joblib.dump(pipeline, os.path.join(models_dir, "svm_model.pkl"))
 
     # Báo cáo text
     with open(os.path.join(RESULT_DIR, "classification_report.txt"), "w", encoding="utf-8") as f:

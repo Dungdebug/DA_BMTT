@@ -28,7 +28,7 @@
                 </div>
                 <div>
                     <h1 class="logo-title">HYBRID THREAT DEFENDER</h1>
-                    <p class="logo-subtitle">Hệ thống Phát hiện Mã độc Lai: Phân tích Tĩnh + AI Heuristics (Random Forest & SVM) + Tri thức Đám mây</p>
+                    <p class="logo-subtitle">Hệ thống Phát hiện Mã độc Lai: Phân tích Tĩnh + AI Heuristics (Random Forest, KNN & SVM) + Tri thức Đám mây</p>
                 </div>
             </div>
             <div class="header-controls">
@@ -51,7 +51,7 @@
             <h2 class="topic-title">"Phát hiện file chứa mã độc dựa vào phương pháp lai kết hợp giữa phân tích tĩnh tại chỗ và tra cứu tri thức mối đe dọa đám mây"</h2>
             <div class="topic-tags">
                 <span class="tag">Static Binary & Source Inspection</span>
-                <span class="tag">Dual-AI: Random Forest & SVM</span>
+                <span class="tag">Tri-AI: Random Forest, KNN & SVM</span>
                 <span class="tag">PE Shannon Entropy</span>
                 <span class="tag">Zero-Day Anomaly Detection</span>
                 <span class="tag">Cloud Threat Intel (VirusTotal)</span>
@@ -80,8 +80,8 @@
             <div class="process-step-item active">
                 <div class="step-icon-circle">3</div>
                 <div class="step-text">
-                    <strong>BƯỚC 3: AI Random Forest & SVM</strong>
-                    <span>Học máy đối chiếu 2 mô hình & Xếp hạng rủi ro</span>
+                    <strong>BƯỚC 3: AI Random Forest, KNN & SVM</strong>
+                    <span>Học máy đối chiếu 3 mô hình & Bỏ phiếu đa số</span>
                 </div>
             </div>
         </div>
@@ -99,7 +99,7 @@
                         </svg>
                     </div>
                     <h3>Kéo thả tệp nhị phân (.exe, .dll...) hoặc tệp mã nguồn (.py, .js, .bat, .ps1...) vào đây để quét</h3>
-                    <p class="drop-hint">Hệ thống tự động chạy qua 3 bước: Phân tích tại chỗ ➔ Tra cứu đám mây ➔ Dự đoán & đối chiếu AI (Random Forest vs SVM)</p>
+                    <p class="drop-hint">Hệ thống tự động chạy qua 3 bước: Phân tích tại chỗ ➔ Tra cứu đám mây ➔ Dự đoán & đối chiếu 3 thuật toán AI (Random Forest vs KNN vs SVM)</p>
                     <button class="btn-browse" onclick="document.getElementById('fileInput').click()">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
                         Chọn Tệp Từ Máy Tính
@@ -289,27 +289,27 @@
                     </div>
                 </div>
 
-                <!-- TAB 2: AI & DUAL-MODEL COMPARISON (RANDOM FOREST VS SVM) -->
+                <!-- TAB 2: AI & MULTI-MODEL COMPARISON (RANDOM FOREST VS KNN VS SVM) -->
                 <div class="tab-pane" id="tabAI">
                     <!-- Status consensus banner -->
                     <div class="consensus-banner" id="consensusBanner">
                         <div class="consensus-icon">⚖️</div>
                         <div class="consensus-text">
-                            <h4 id="consensusStatus">Đang phân tích đối chiếu song song 2 thuật toán AI...</h4>
-                            <p id="consensusDesc">Hệ thống áp dụng cả Random Forest (Ensemble Tree) và Support Vector Machine (SVM Kernel RBF) để kiểm tra chéo độ tin cậy.</p>
+                            <h4 id="consensusStatus">Đang phân tích đối chiếu song song 3 thuật toán AI...</h4>
+                            <p id="consensusDesc">Hệ thống áp dụng cả Random Forest (Ensemble Tree), K-Nearest Neighbors (KNN Distance) và Support Vector Machine (SVM RBF) để bỏ phiếu đa số và kiểm tra chéo độ tin cậy.</p>
                         </div>
                     </div>
 
-                    <!-- Dual Model Cards -->
+                    <!-- Tri-Model Cards -->
                     <div class="dual-ai-grid">
                         <!-- Model 1: Random Forest Card -->
                         <div class="model-card rf-card">
                             <div class="model-card-header">
                                 <div class="model-badge rf-badge">🏆 THUẬT TOÁN 1 (KHUYÊN DÙNG)</div>
-                                <span class="model-latency" id="rfLatency">⚡ 0.0106 ms</span>
+                                <span class="model-latency" id="rfLatency">⚡ 0.0206 ms</span>
                             </div>
                             <h3 class="model-title">Random Forest Classifier</h3>
-                            <p class="model-desc">Rừng ngẫu nhiên 100 cây quyết định, phân loại phi tuyến tính tốc độ cao.</p>
+                            <p class="model-desc">Rừng ngẫu nhiên 100 cây quyết định, phân loại phi tuyến tính tốc độ cao, Recall 98.12%.</p>
                             
                             <div class="model-prob-box">
                                 <span class="prob-lbl">Xác Suất Mã Độc (RF)</span>
@@ -325,17 +325,46 @@
                             </div>
 
                             <div class="model-metrics-mini">
-                                <div><span>Accuracy</span><strong id="rfAcc">94.42%</strong></div>
-                                <div><span>F1-Score</span><strong id="rfF1">95.18%</strong></div>
-                                <div><span>ROC-AUC</span><strong id="rfAuc">0.9816</strong></div>
+                                <div><span>Accuracy</span><strong id="rfAcc">97.75%</strong></div>
+                                <div><span>F1-Score</span><strong id="rfF1">98.10%</strong></div>
+                                <div><span>ROC-AUC</span><strong id="rfAuc">0.9963</strong></div>
                             </div>
                         </div>
 
-                        <!-- Model 2: SVM Card -->
+                        <!-- Model 2: KNN Card -->
+                        <div class="model-card knn-card">
+                            <div class="model-card-header">
+                                <div class="model-badge knn-badge">⚡ THUẬT TOÁN 2 (K-LÂN CẬN)</div>
+                                <span class="model-latency" id="knnLatency">⚡ 0.1036 ms</span>
+                            </div>
+                            <h3 class="model-title">K-Nearest Neighbors (KNN)</h3>
+                            <p class="model-desc">Khoảng cách Euclidean K=5 láng giềng gần nhất, Precision kỷ lục 99.05% lọc sạch báo nhầm.</p>
+                            
+                            <div class="model-prob-box">
+                                <span class="prob-lbl">Xác Suất Mã Độc (KNN)</span>
+                                <span class="prob-num" id="knnProbVal">96.2%</span>
+                                <div class="prob-bar-track">
+                                    <div class="prob-bar-fill knn-fill" id="knnProbBar" style="width: 96.2%"></div>
+                                </div>
+                            </div>
+
+                            <div class="model-verdict-row">
+                                <span>Phán quyết KNN:</span>
+                                <strong class="badge-verdict-mini" id="knnVerdictBadge">MALICIOUS</strong>
+                            </div>
+
+                            <div class="model-metrics-mini">
+                                <div><span>Accuracy</span><strong id="knnAcc">97.18%</strong></div>
+                                <div><span>F1-Score</span><strong id="knnF1">97.58%</strong></div>
+                                <div><span>ROC-AUC</span><strong id="knnAuc">0.9875</strong></div>
+                            </div>
+                        </div>
+
+                        <!-- Model 3: SVM Card -->
                         <div class="model-card svm-card">
                             <div class="model-card-header">
-                                <div class="model-badge svm-badge">THUẬT TOÁN 2 (ĐỐI CHỨNG)</div>
-                                <span class="model-latency" id="svmLatency">⏱️ 0.7796 ms</span>
+                                <div class="model-badge svm-badge">🛡️ THUẬT TOÁN 3 (ĐỐI CHỨNG)</div>
+                                <span class="model-latency" id="svmLatency">⏱️ 1.0229 ms</span>
                             </div>
                             <h3 class="model-title">Support Vector Machine (SVM)</h3>
                             <p class="model-desc">Kernel RBF tối ưu hóa siêu phẳng phân cách cực đại (Maximum Margin Hyperplane).</p>
@@ -354,9 +383,9 @@
                             </div>
 
                             <div class="model-metrics-mini">
-                                <div><span>Accuracy</span><strong id="svmAcc">84.79%</strong></div>
-                                <div><span>F1-Score</span><strong id="svmF1">87.14%</strong></div>
-                                <div><span>ROC-AUC</span><strong id="svmAuc">0.9164</strong></div>
+                                <div><span>Accuracy</span><strong id="svmAcc">93.18%</strong></div>
+                                <div><span>F1-Score</span><strong id="svmF1">94.25%</strong></div>
+                                <div><span>ROC-AUC</span><strong id="svmAuc">0.9705</strong></div>
                             </div>
                         </div>
                     </div>
@@ -365,110 +394,123 @@
                     <div class="comparison-table-card">
                         <div class="card-section-title">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 20V10"/><path d="M12 20V4"/><path d="M6 20v-6"/></svg>
-                            <h4>Bảng Chỉ Số Đối Chiếu So Sánh Hai Thuật Toán AI (Random Forest vs SVM)</h4>
+                            <h4>Bảng Chỉ Số Đối Chiếu So Sánh 3 Thuật Toán AI (Random Forest vs KNN vs SVM)</h4>
                         </div>
                         <div class="table-responsive">
                             <table class="data-table comp-table">
                                 <thead>
                                     <tr>
                                         <th>Tiêu Chí Đo Lường (Metric)</th>
-                                        <th class="th-rf">▲ Random Forest (Tăng ngon - Cao hơn)</th>
-                                        <th class="th-svm">▼ Support Vector Machine (Giảm thấp hơn)</th>
-                                        <th>Đánh Giá Chênh Lệch Thực Tế</th>
+                                        <th class="th-rf">▲ Random Forest (Cây Quyết Định)</th>
+                                        <th class="th-knn">⚡ K-Nearest Neighbors (Láng Giềng K=5)</th>
+                                        <th class="th-svm">▼ Support Vector Machine (Siêu Phẳng RBF)</th>
+                                        <th>Đánh Giá Tổng Quan Thực Tế</th>
                                     </tr>
                                 </thead>
                                 <tbody id="compTableBody">
                                     <!-- Phân hệ 1: Phát hiện Mã Độc -->
                                     <tr class="table-section-row">
-                                        <th colspan="4" style="background: rgba(56, 189, 248, 0.12); color: #38bdf8; font-size: 0.82rem; letter-spacing: 0.5px; padding: 10px 14px;">
+                                        <th colspan="5" style="background: rgba(56, 189, 248, 0.12); color: #38bdf8; font-size: 0.82rem; letter-spacing: 0.5px; padding: 10px 14px;">
                                             🛡️ PHÂN HỆ 1: ĐO LƯỜNG NĂNG LỰC PHÁT HIỆN MÃ ĐỘC (Tổng 2,920 mẫu mã độc thực tế)
                                         </th>
                                     </tr>
                                     <tr>
                                         <td><strong>Số mã độc bắt trúng (True Positives)</strong></td>
                                         <td class="td-rf">2,865 mẫu (98.12%)</td>
+                                        <td class="td-knn">2,808 mẫu (96.16%)</td>
                                         <td class="td-svm">2,755 mẫu (94.35%)</td>
-                                        <td><span class="badge-win-green">▲ RF bắt nhiều hơn +110 mẫu (+3.77%)</span></td>
+                                        <td><span class="badge-win-green">▲ RF dẫn đầu (+57 mẫu so với KNN, +110 so với SVM)</span></td>
                                     </tr>
                                     <tr>
                                         <td><strong>Số mã độc lọt lưới (False Negatives)</strong></td>
                                         <td class="td-rf">55 mẫu (1.88%)</td>
+                                        <td class="td-knn">112 mẫu (3.84%)</td>
                                         <td class="td-svm">165 mẫu (5.65%)</td>
-                                        <td><span class="badge-win-green">▲ RF ít lọt hơn 110 mẫu (SVM lọt gấp 3.0 lần)</span></td>
+                                        <td><span class="badge-win-green">▲ RF ít lọt nhất (SVM lọt gấp 3.0 lần RF)</span></td>
                                     </tr>
                                     <tr>
                                         <td><strong>Tỷ lệ bao phủ mã độc (Recall / Sensitivity)</strong></td>
                                         <td class="td-rf">98.12%</td>
+                                        <td class="td-knn">96.16%</td>
                                         <td class="td-svm">94.35%</td>
-                                        <td><span class="badge-win-green">▲ RF cao hơn +3.77%</span></td>
+                                        <td><span class="badge-win-green">▲ RF (98.12%) > KNN (96.16%) > SVM (94.35%)</span></td>
                                     </tr>
 
                                     <!-- Phân hệ 2: Nhận diện Mã Sạch -->
                                     <tr class="table-section-row">
-                                        <th colspan="4" style="background: rgba(16, 185, 129, 0.12); color: #10b981; font-size: 0.82rem; letter-spacing: 0.5px; padding: 10px 14px;">
+                                        <th colspan="5" style="background: rgba(16, 185, 129, 0.12); color: #10b981; font-size: 0.82rem; letter-spacing: 0.5px; padding: 10px 14px;">
                                             🟢 PHÂN HỆ 2: ĐO LƯỜNG NĂNG LỰC NHẬN DIỆN MÃ SẠCH (Tổng 2,005 mẫu sạch thực tế)
                                         </th>
                                     </tr>
                                     <tr>
                                         <td><strong>Số mã sạch xác nhận đúng (True Negatives)</strong></td>
                                         <td class="td-rf">1,949 mẫu (97.21%)</td>
+                                        <td class="td-knn">1,978 mẫu (98.65%)</td>
                                         <td class="td-svm">1,834 mẫu (91.47%)</td>
-                                        <td><span class="badge-win-green">▲ RF nhận đúng nhiều hơn +115 mẫu (+5.74%)</span></td>
+                                        <td><span class="badge-win-purple">🏆 KNN nhận đúng nhiều nhất (+29 mẫu so với RF)</span></td>
                                     </tr>
                                     <tr>
                                         <td><strong>Báo động nhầm mã sạch (False Positives)</strong></td>
                                         <td class="td-rf">56 mẫu (2.79%)</td>
+                                        <td class="td-knn">27 mẫu (1.35%)</td>
                                         <td class="td-svm">171 mẫu (8.53%)</td>
-                                        <td><span class="badge-win-green">▲ RF ít nhầm hơn 115 mẫu (SVM chặn oan gấp 3.1 lần)</span></td>
+                                        <td><span class="badge-win-purple">🏆 KNN ít nhầm nhất (chỉ 27 mẫu, SVM nhầm gấp 6.3 lần)</span></td>
                                     </tr>
                                     <tr>
                                         <td><strong>Độ đặc hiệu mã sạch (Specificity / TNR)</strong></td>
                                         <td class="td-rf">97.21%</td>
+                                        <td class="td-knn">98.65%</td>
                                         <td class="td-svm">91.47%</td>
-                                        <td><span class="badge-win-green">▲ RF chuẩn xác hơn +5.74%</span></td>
+                                        <td><span class="badge-win-purple">🏆 KNN dẫn đầu tuyệt đối (98.65%)</span></td>
                                     </tr>
 
                                     <!-- Phân hệ 3: Hiệu năng tổng thể & Tốc độ -->
                                     <tr class="table-section-row">
-                                        <th colspan="4" style="background: rgba(245, 158, 11, 0.12); color: #f59e0b; font-size: 0.82rem; letter-spacing: 0.5px; padding: 10px 14px;">
+                                        <th colspan="5" style="background: rgba(245, 158, 11, 0.12); color: #f59e0b; font-size: 0.82rem; letter-spacing: 0.5px; padding: 10px 14px;">
                                             ⚡ PHÂN HỆ 3: HIỆU NĂNG TỔNG THỂ & TỐC ĐỘ VẬN HÀNH (4,925 mẫu kiểm thử)
                                         </th>
                                     </tr>
                                     <tr>
                                         <td><strong>Độ chính xác tổng thể (Accuracy)</strong></td>
                                         <td class="td-rf">97.75%</td>
+                                        <td class="td-knn">97.18%</td>
                                         <td class="td-svm">93.18%</td>
-                                        <td><span class="badge-win-green">▲ RF cao hơn +4.57%</span></td>
+                                        <td><span class="badge-win-green">▲ RF (97.75%) suýt soát KNN (97.18%), vượt xa SVM</span></td>
                                     </tr>
                                     <tr>
                                         <td><strong>Độ chuẩn xác (Precision)</strong></td>
                                         <td class="td-rf">98.08%</td>
+                                        <td class="td-knn">99.05%</td>
                                         <td class="td-svm">94.16%</td>
-                                        <td><span class="badge-win-green">▲ RF cao hơn +3.92%</span></td>
+                                        <td><span class="badge-win-purple">🏆 KNN cao nhất hệ thống (99.05%)</span></td>
                                     </tr>
                                     <tr>
                                         <td><strong>Điểm F1-Score (Cân bằng P/R)</strong></td>
                                         <td class="td-rf">98.10%</td>
+                                        <td class="td-knn">97.58%</td>
                                         <td class="td-svm">94.25%</td>
-                                        <td><span class="badge-win-green">▲ RF cao hơn +3.85%</span></td>
+                                        <td><span class="badge-win-green">▲ RF (98.10%) > KNN (97.58%) > SVM (94.25%)</span></td>
                                     </tr>
                                     <tr>
                                         <td><strong>Đường cong ROC-AUC</strong></td>
                                         <td class="td-rf">0.9963</td>
+                                        <td class="td-knn">0.9875</td>
                                         <td class="td-svm">0.9705</td>
-                                        <td><span class="badge-win-green">▲ RF cao hơn +0.0258</span></td>
+                                        <td><span class="badge-win-green">▲ Cả 3 mô hình đều đạt mức xuất sắc (>0.97)</span></td>
                                     </tr>
                                     <tr>
                                         <td><strong>Tốc độ suy luận (Inference Latency)</strong></td>
-                                        <td class="td-rf" id="tblRfLatency">0.0322 ms/mẫu</td>
-                                        <td class="td-svm" id="tblSvmLatency">0.3773 ms/mẫu</td>
-                                        <td><span class="badge-win-green">▲ RF nhanh hơn gấp ~12 lần</span></td>
+                                        <td class="td-rf" id="tblRfLatency">0.0206 ms/mẫu</td>
+                                        <td class="td-knn" id="tblKnnLatency">0.1036 ms/mẫu</td>
+                                        <td class="td-svm" id="tblSvmLatency">1.0229 ms/mẫu</td>
+                                        <td><span class="badge-win-green">▲ RF siêu tốc (0.02ms), KNN nhanh gấp 10 lần SVM</span></td>
                                     </tr>
                                     <tr>
                                         <td><strong>Thời gian huấn luyện trên 24k mẫu</strong></td>
-                                        <td class="td-rf">0.66 giây (Đa nhân CPU)</td>
-                                        <td class="td-svm">14.25 giây</td>
-                                        <td><span class="badge-win-green">▲ RF huấn luyện nhanh hơn ~22 lần</span></td>
+                                        <td class="td-rf">0.50 giây (Đa nhân CPU)</td>
+                                        <td class="td-knn">0.02 giây (Tức thì)</td>
+                                        <td class="td-svm">41.94 giây (Quadratic)</td>
+                                        <td><span class="badge-win-purple">🏆 KNN huấn luyện nhanh nhất (0.02s)</span></td>
                                     </tr>
                                 </tbody>
                             </table>

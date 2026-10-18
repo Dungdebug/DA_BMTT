@@ -25,6 +25,8 @@ res2 = hd.scan(p2)
 print("2. Clean C++ File (.cpp):")
 print(f"   Verdict: {res2['hybrid_decision']['final_verdict']} | Risk: {res2['hybrid_decision']['overall_risk_score']} | Rule: {res2['hybrid_decision']['applied_rule']}")
 print(f"   RF: {res2['ai_analysis']['dual_models']['random_forest']['prediction_label']} ({res2['ai_analysis']['dual_models']['random_forest']['malware_probability']}%)")
+print(f"   KNN: {res2['ai_analysis']['dual_models']['knn']['prediction_label']} ({res2['ai_analysis']['dual_models']['knn']['malware_probability']}%)")
 print(f"   SVM: {res2['ai_analysis']['dual_models']['svm']['prediction_label']} ({res2['ai_analysis']['dual_models']['svm']['malware_probability']}%)")
+print(f"   Consensus: {res2['ai_analysis']['dual_models']['comparison']['status_text']}")
 
 print("\n[+] TẤT CẢ GUARDRAIL ĐÃ HOẠT ĐỘNG CHUẨN XÁC!")

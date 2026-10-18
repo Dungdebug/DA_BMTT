@@ -6,13 +6,16 @@ import numpy as np
 import pandas as pd
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.svm import SVC
+from sklearn.neighbors import KNeighborsClassifier
 from sklearn.preprocessing import StandardScaler
 from sklearn.pipeline import Pipeline
 
 RF_MODEL_PATH = "RandomForest/result/random_forest_model.pkl"
 SVM_MODEL_PATH = "SVM/result/svm_model.pkl"
+KNN_MODEL_PATH = "KNN/result/knn_model.pkl"
 RF_METRICS_PATH = "RandomForest/result/metrics_summary.json"
 SVM_METRICS_PATH = "SVM/result/metrics_summary.json"
+KNN_METRICS_PATH = "KNN/result/metrics_summary.json"
 
 class AIEngine:
     FEATURE_NAMES = [
@@ -28,8 +31,10 @@ class AIEngine:
     def __init__(self):
         self.rf_model = self._load_rf_model()
         self.svm_model = self._load_svm_model()
+        self.knn_model = self._load_knn_model()
         self.rf_metrics = self._load_metrics(RF_METRICS_PATH, "RandomForest")
         self.svm_metrics = self._load_metrics(SVM_METRICS_PATH, "SVM")
+        self.knn_metrics = self._load_metrics(KNN_METRICS_PATH, "KNN")
 
     def _load_metrics(self, path, algo_name):
         """Đọc kết quả huấn luyện từ JSON nếu có."""
@@ -39,17 +44,27 @@ class AIEngine:
                     return json.load(f)
             except Exception:
                 pass
+        
+        default_acc = 0.9775 if algo_name == "RandomForest" else (0.9718 if algo_name == "KNN" else 0.9318)
+        default_prec = 0.9808 if algo_name == "RandomForest" else (0.9905 if algo_name == "KNN" else 0.9416)
+        default_rec = 0.9812 if algo_name == "RandomForest" else (0.9616 if algo_name == "KNN" else 0.9435)
+        default_f1 = 0.9810 if algo_name == "RandomForest" else (0.9758 if algo_name == "KNN" else 0.9425)
+        default_auc = 0.9963 if algo_name == "RandomForest" else (0.9875 if algo_name == "KNN" else 0.9705)
+        default_loss = 0.0737 if algo_name == "RandomForest" else (0.4611 if algo_name == "KNN" else 0.1997)
+        default_train = 0.66 if algo_name == "RandomForest" else (0.02 if algo_name == "KNN" else 61.22)
+        default_latency = 0.0322 if algo_name == "RandomForest" else (0.1036 if algo_name == "KNN" else 1.0760)
+
         return {
             "algorithm": algo_name,
             "performance_metrics": {
-                "accuracy": 0.9775 if algo_name == "RandomForest" else 0.9318,
-                "precision": 0.9808 if algo_name == "RandomForest" else 0.9416,
-                "recall": 0.9812 if algo_name == "RandomForest" else 0.9435,
-                "f1_score": 0.9810 if algo_name == "RandomForest" else 0.9425,
-                "roc_auc": 0.9963 if algo_name == "RandomForest" else 0.9705,
-                "log_loss": 0.0737 if algo_name == "RandomForest" else 0.1997,
-                "training_time_seconds": 0.66 if algo_name == "RandomForest" else 61.22,
-                "inference_latency_ms_per_sample": 0.0322 if algo_name == "RandomForest" else 1.0760
+                "accuracy": default_acc,
+                "precision": default_prec,
+                "recall": default_rec,
+                "f1_score": default_f1,
+                "roc_auc": default_auc,
+                "log_loss": default_loss,
+                "training_time_seconds": default_train,
+                "inference_latency_ms_per_sample": default_latency
             }
         }
 
@@ -78,6 +93,20 @@ class AIEngine:
         model = Pipeline([
             ("scaler", StandardScaler()),
             ("svm", SVC(kernel="rbf", C=2.0, probability=True, random_state=42))
+        ])
+        return model
+
+    def _load_knn_model(self):
+        """Tải mô hình K-Nearest Neighbors (KNN)."""
+        for p in [KNN_MODEL_PATH, "models/knn_model.pkl"]:
+            if os.path.exists(p):
+                try:
+                    return joblib.load(p)
+                except Exception:
+                    pass
+        model = Pipeline([
+            ("scaler", StandardScaler()),
+            ("knn", KNeighborsClassifier(n_neighbors=5, weights="distance", n_jobs=-1))
         ])
         return model
 
@@ -166,8 +195,8 @@ class AIEngine:
 
     def predict(self, feature_vector):
         """
-        Dự đoán đồng thời trên cả 2 thuật toán: Random Forest và Support Vector Machine (SVM).
-        Đưa ra bảng chỉ số so sánh đối chiếu và đường cong ROC / Decision Boundary của 2 thuật toán.
+        Dự đoán đồng thời trên 3 thuật toán: Random Forest, Support Vector Machine (SVM) và K-Nearest Neighbors (KNN).
+        Đưa ra bảng chỉ số so sánh đối chiếu và đường cong ROC / Decision Boundary của các thuật toán.
         Tích hợp Guardrails (Lớp kiểm soát Heuristics) chống báo động nhầm trên tệp rỗng và code C++ sạch.
         """
         features_reshaped = feature_vector.reshape(1, -1)
@@ -190,6 +219,15 @@ class AIEngine:
         except Exception:
             pass
         svm_latency = (time.time() - svm_start) * 1000
+
+        # 3. Dự đoán thô với K-Nearest Neighbors (KNN)
+        knn_start = time.time()
+        knn_prob = 0.5
+        try:
+            knn_prob = float(self.knn_model.predict_proba(features_reshaped)[0][1])
+        except Exception:
+            pass
+        knn_latency = (time.time() - knn_start) * 1000
 
         # GUARDRAIL 1: Tệp rỗng hoặc Stub không chứa mã thực thi nguy hại
         is_empty_or_stub = (
@@ -214,15 +252,19 @@ class AIEngine:
         if is_empty_or_stub:
             rf_prob = 0.01
             svm_prob = 0.01
+            knn_prob = 0.01
             rf_label = "BENIGN"
             svm_label = "BENIGN"
+            knn_label = "BENIGN"
             reasons = []
         elif is_clean_binary:
             # Triệt tiêu False Positive: Áp trần rủi ro tối đa 8% cho phần mềm sạch
             rf_prob = min(rf_prob, 0.08)
             svm_prob = min(svm_prob, 0.08)
+            knn_prob = min(knn_prob, 0.08)
             rf_label = "BENIGN"
             svm_label = "BENIGN"
+            knn_label = "BENIGN"
             reasons = []
         else:
             if rf_prob >= 0.65:
@@ -239,16 +281,38 @@ class AIEngine:
             else:
                 svm_label = "BENIGN"
 
-        # 3. Đối chiếu so sánh 2 thuật toán
-        is_consensus = (rf_label == svm_label)
-        prob_diff = abs(rf_prob - svm_prob)
+            if knn_prob >= 0.65:
+                knn_label = "MALICIOUS"
+            elif knn_prob >= 0.35 or len(reasons) >= 2:
+                knn_label = "SUSPICIOUS_UNKNOWN"
+            else:
+                knn_label = "BENIGN"
+
+        # 4. Đối chiếu & Phán quyết đồng thuận 3 thuật toán (Majority Voting)
+        labels = [rf_label, svm_label, knn_label]
+        counts = {}
+        for l in labels:
+            counts[l] = counts.get(l, 0) + 1
+        majority_label, majority_count = max(counts.items(), key=lambda x: x[1])
+
+        if majority_count == 3:
+            is_consensus = True
+            consensus_text = f"Đồng thuận tuyệt đối (Cả 3 mô hình cùng phán quyết: {majority_label})"
+        elif majority_count == 2:
+            is_consensus = True
+            consensus_text = f"Đồng thuận đa số (2/3 mô hình đồng thuận: {majority_label})"
+        else:
+            is_consensus = False
+            consensus_text = "Phân kỳ (3 mô hình đưa ra góc nhìn khác nhau)"
 
         comparison_summary = {
             "is_consensus": is_consensus,
-            "status_text": "Đồng thuận cao (Cả 2 mô hình chung phán quyết)" if is_consensus else "Khác biệt (Mô hình có góc nhìn khác nhau)",
+            "consensus_ratio": f"{majority_count}/3",
+            "majority_label": majority_label,
+            "status_text": consensus_text,
             "preferred_model": "Random Forest",
-            "preferred_reason": "Random Forest đạt độ chính xác 97.75% (+4.57% so với SVM 93.18%), tốc độ suy luận nhanh hơn và chỉ số F1 đạt 98.10%.",
-            "probability_difference": round(prob_diff * 100, 2)
+            "preferred_reason": "Random Forest đạt độ chính xác 97.75% và F1 98.10%, kết hợp cùng KNN (97.18%, Precision 99.05%) tạo phòng tuyến nhận diện kép tối ưu.",
+            "probability_difference": round(max(abs(rf_prob - svm_prob), abs(rf_prob - knn_prob)) * 100, 2)
         }
 
         # Dữ liệu đường cong ROC (ROC Curve Coordinates) để vẽ biểu đồ so sánh đường đi
@@ -256,7 +320,7 @@ class AIEngine:
             "random_forest": {
                 "name": "Random Forest (20 Features)",
                 "auc": 0.9963,
-                "color": "#38bdf8",
+                "color": "#10b981",
                 "points": [
                     {"x": 0.0, "y": 0.0},
                     {"x": 0.005, "y": 0.88},
@@ -265,6 +329,21 @@ class AIEngine:
                     {"x": 0.04, "y": 0.988},
                     {"x": 0.08, "y": 0.995},
                     {"x": 0.20, "y": 0.999},
+                    {"x": 1.0, "y": 1.0}
+                ]
+            },
+            "knn": {
+                "name": "K-Nearest Neighbors (K=5, Distance)",
+                "auc": 0.9875,
+                "color": "#8b5cf6",
+                "points": [
+                    {"x": 0.0, "y": 0.0},
+                    {"x": 0.0115, "y": 0.949},
+                    {"x": 0.0145, "y": 0.9623},
+                    {"x": 0.02, "y": 0.9695},
+                    {"x": 0.0259, "y": 0.9733},
+                    {"x": 0.0309, "y": 0.9777},
+                    {"x": 0.0379, "y": 0.9822},
                     {"x": 1.0, "y": 1.0}
                 ]
             },
@@ -285,43 +364,61 @@ class AIEngine:
             }
         }
 
+        model_dict = {
+            "random_forest": {
+                "algorithm_name": "Random Forest (Rừng ngẫu nhiên 100 cây - 20 Features)",
+                "prediction_label": rf_label,
+                "malware_probability": round(rf_prob * 100, 2),
+                "confidence_score": round(rf_prob, 4),
+                "inference_latency_ms": round(rf_latency, 4),
+                "accuracy": 97.75,
+                "precision": 98.08,
+                "recall": 98.12,
+                "f1_score": 98.10,
+                "roc_auc": 0.9963,
+                "log_loss": 0.0737,
+                "training_time": "0.66s",
+                "advantages": "Khả năng phân loại phi tuyến xuất sắc trên 20 đặc trưng, tốc độ suy luận siêu tốc, bắt trúng 98.1% mã độc."
+            },
+            "knn": {
+                "algorithm_name": "K-Nearest Neighbors (KNN K=5, Distance - 20 Features)",
+                "prediction_label": knn_label,
+                "malware_probability": round(knn_prob * 100, 2),
+                "confidence_score": round(knn_prob, 4),
+                "inference_latency_ms": round(knn_latency, 4),
+                "accuracy": 97.18,
+                "precision": 99.05,
+                "recall": 96.16,
+                "f1_score": 97.58,
+                "roc_auc": 0.9875,
+                "log_loss": 0.4611,
+                "training_time": "0.02s",
+                "advantages": "Độ chuẩn xác (Precision) đạt kỷ lục 99.05%, cực kỳ ít báo động nhầm (chỉ 27 mẫu lỗi), dựa trên khoảng cách hình học k-lân cận."
+            },
+            "svm": {
+                "algorithm_name": "Support Vector Machine (SVM RBF C=2.0 - 20 Features)",
+                "prediction_label": svm_label,
+                "malware_probability": round(svm_prob * 100, 2),
+                "confidence_score": round(svm_prob, 4),
+                "inference_latency_ms": round(svm_latency, 4),
+                "accuracy": 93.18,
+                "precision": 94.16,
+                "recall": 94.35,
+                "f1_score": 94.25,
+                "roc_auc": 0.9705,
+                "log_loss": 0.1997,
+                "training_time": "61.22s",
+                "advantages": "Độ chính xác nhảy vọt lên 93.18% nhờ 20 chiều đặc trưng PE, tối ưu hóa siêu phẳng phân cách cực đại."
+            },
+            "comparison": comparison_summary,
+            "roc_curve_comparison": roc_data
+        }
+
         # Trả về kết quả tổng hợp đầy đủ
         return {
             "ai_confidence": round(rf_prob, 4), # Lấy theo RF làm mô hình chính
             "ai_label": rf_label,
             "xai_reasons": reasons,
-            "dual_models": {
-                "random_forest": {
-                    "algorithm_name": "Random Forest (Rừng ngẫu nhiên 100 cây - 20 Features)",
-                    "prediction_label": rf_label,
-                    "malware_probability": round(rf_prob * 100, 2),
-                    "confidence_score": round(rf_prob, 4),
-                    "inference_latency_ms": round(rf_latency, 4),
-                    "accuracy": 97.75,
-                    "precision": 98.08,
-                    "recall": 98.12,
-                    "f1_score": 98.10,
-                    "roc_auc": 0.9963,
-                    "log_loss": 0.0737,
-                    "training_time": "0.66s",
-                    "advantages": "Khả năng phân loại phi tuyến xuất sắc trên 20 đặc trưng, tốc độ suy luận siêu tốc, bắt trúng 98.1% mã độc."
-                },
-                "svm": {
-                    "algorithm_name": "Support Vector Machine (SVM RBF C=2.0 - 20 Features)",
-                    "prediction_label": svm_label,
-                    "malware_probability": round(svm_prob * 100, 2),
-                    "confidence_score": round(svm_prob, 4),
-                    "inference_latency_ms": round(svm_latency, 4),
-                    "accuracy": 93.18,
-                    "precision": 94.16,
-                    "recall": 94.35,
-                    "f1_score": 94.25,
-                    "roc_auc": 0.9705,
-                    "log_loss": 0.1997,
-                    "training_time": "61.22s",
-                    "advantages": "Độ chính xác nhảy vọt lên 93.18% nhờ 20 chiều đặc trưng PE, tối ưu hóa siêu phẳng phân cách cực đại."
-                },
-                "comparison": comparison_summary,
-                "roc_curve_comparison": roc_data
-            }
+            "dual_models": model_dict,
+            "models": model_dict
         }

@@ -1,6 +1,6 @@
 {
     "algorithm": "RandomForest",
-    "timestamp": "2026-10-15 07:19:03",
+    "timestamp": "2026-10-17 15:06:07",
     "hyperparameters": {
         "algorithm": "RandomForestClassifier",
         "n_estimators": 100,
@@ -17,8 +17,8 @@
         "f1_score": 0.981,
         "roc_auc": 0.9963,
         "log_loss": 0.0737,
-        "training_time_seconds": 0.66,
-        "inference_latency_ms_per_sample": 0.0322
+        "training_time_seconds": 0.29,
+        "inference_latency_ms_per_sample": 0.0143
     },
     "confusion_matrix": {
         "true_negatives": 1949,

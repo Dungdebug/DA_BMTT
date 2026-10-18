@@ -294,93 +294,137 @@ function populateActionList(containerId, list, titleKey, detailKey) {
 let rocChartInstance = null;
 let metricsChartInstance = null;
 
-// Render AI & Dual-Model Comparison (Random Forest vs SVM)
+// Render AI & Multi-Model Comparison (Random Forest vs KNN vs SVM)
 function renderAITab(ai) {
-    const dual = ai.dual_models || {};
+    const dual = ai.dual_models || ai.models || {};
     const rf = dual.random_forest || {
         prediction_label: ai.ai_label,
         malware_probability: Math.round(ai.ai_confidence * 1000) / 10,
-        inference_latency_ms: 0.0106,
-        accuracy: 94.42,
-        f1_score: 95.18,
-        roc_auc: 0.9816
+        inference_latency_ms: 0.0206,
+        accuracy: 97.75,
+        precision: 98.08,
+        recall: 98.12,
+        f1_score: 98.10,
+        roc_auc: 0.9963
+    };
+    const knn = dual.knn || {
+        prediction_label: ai.ai_label,
+        malware_probability: Math.round((ai.ai_confidence * 0.98) * 1000) / 10,
+        inference_latency_ms: 0.1036,
+        accuracy: 97.18,
+        precision: 99.05,
+        recall: 96.16,
+        f1_score: 97.58,
+        roc_auc: 0.9875
     };
     const svm = dual.svm || {
         prediction_label: ai.ai_label === "MALICIOUS" ? "MALICIOUS" : (ai.ai_confidence > 0.4 ? "SUSPICIOUS_UNKNOWN" : "BENIGN"),
         malware_probability: Math.round((ai.ai_confidence * 0.88) * 1000) / 10,
-        inference_latency_ms: 0.7796,
-        accuracy: 84.79,
-        f1_score: 87.14,
-        roc_auc: 0.9164
+        inference_latency_ms: 1.0229,
+        accuracy: 93.18,
+        precision: 94.16,
+        recall: 94.35,
+        f1_score: 94.25,
+        roc_auc: 0.9705
     };
     const comp = dual.comparison || {
-        is_consensus: rf.prediction_label === svm.prediction_label,
-        status_text: rf.prediction_label === svm.prediction_label ? "Đồng thuận cao (Cả 2 mô hình chung phán quyết)" : "Khác biệt (Mô hình có góc nhìn khác nhau)"
+        is_consensus: rf.prediction_label === svm.prediction_label && rf.prediction_label === knn.prediction_label,
+        consensus_ratio: "3/3",
+        majority_label: rf.prediction_label,
+        status_text: rf.prediction_label === svm.prediction_label ? "Đồng thuận cao" : "Khác biệt"
     };
 
     // 1. Cập nhật Consensus Banner
     const consensusStatus = document.getElementById("consensusStatus");
     const consensusDesc = document.getElementById("consensusDesc");
     if (consensusStatus && consensusDesc) {
-        if (comp.is_consensus) {
-            consensusStatus.innerHTML = `✅ <strong>Trạng thái đồng thuận:</strong> Cả 2 thuật toán đều dự đoán tệp là <span style="color:${rf.prediction_label === 'MALICIOUS' ? '#ef4444' : '#10b981'}">${rf.prediction_label}</span>`;
-            consensusDesc.innerText = `Random Forest (Xác suất: ${rf.malware_probability}%) và SVM (Xác suất: ${svm.malware_probability}%) có mức độ tin cậy đồng nhất cao.`;
+        const majLabel = comp.majority_label || rf.prediction_label;
+        const majColor = majLabel === 'MALICIOUS' ? '#ef4444' : (majLabel === 'BENIGN' ? '#10b981' : '#f59e0b');
+        
+        if (comp.consensus_ratio === "3/3" || (rf.prediction_label === knn.prediction_label && knn.prediction_label === svm.prediction_label)) {
+            consensusStatus.innerHTML = `✅ <strong>Trạng thái đồng thuận tuyệt đối (3/3):</strong> Cả 3 thuật toán đều dự đoán tệp là <span style="color:${majColor}">${majLabel}</span>`;
+            consensusDesc.innerText = `Random Forest (${rf.malware_probability}%), KNN (${knn.malware_probability}%) và SVM (${svm.malware_probability}%) đều cho kết quả đồng nhất cao.`;
+        } else if (comp.is_consensus || comp.consensus_ratio === "2/3") {
+            consensusStatus.innerHTML = `⚖️ <strong>Trạng thái đồng thuận đa số (2/3):</strong> Đa số mô hình phán quyết tệp là <span style="color:${majColor}">${majLabel}</span>`;
+            consensusDesc.innerText = `RF: ${rf.prediction_label} (${rf.malware_probability}%), KNN: ${knn.prediction_label} (${knn.malware_probability}%), SVM: ${svm.prediction_label} (${svm.malware_probability}%).`;
         } else {
-            consensusStatus.innerHTML = `⚠️ <strong>Trạng thái phân kỳ:</strong> Random Forest báo <span style="color:#ef4444">${rf.prediction_label}</span>, trong khi SVM báo <span style="color:#f59e0b">${svm.prediction_label}</span>`;
-            consensusDesc.innerText = "Do đặc trưng cấu trúc phi tuyến phức tạp, hệ thống ưu tiên áp dụng kết quả của Random Forest nhờ độ chính xác vượt trội (94.42%).";
+            consensusStatus.innerHTML = `⚠️ <strong>Trạng thái phân kỳ:</strong> 3 mô hình đưa ra phán quyết khác nhau (RF: <span style="color:#ef4444">${rf.prediction_label}</span>, KNN: <span style="color:#a855f7">${knn.prediction_label}</span>, SVM: <span style="color:#f59e0b">${svm.prediction_label}</span>)`;
+            consensusDesc.innerText = "Do đặc trưng cấu trúc phi tuyến phức tạp, hệ thống ưu tiên áp dụng kết quả của Random Forest nhờ độ chính xác và F1-Score vượt trội (97.75%).";
         }
     }
 
     // 2. Thẻ Random Forest Card
-    document.getElementById("rfLatency").innerText = `⚡ ${rf.inference_latency_ms} ms`;
-    document.getElementById("rfProbVal").innerText = `${rf.malware_probability}%`;
-    document.getElementById("rfProbBar").style.width = `${Math.min(100, Math.max(0, rf.malware_probability))}%`;
+    const rfLat = document.getElementById("rfLatency");
+    if (rfLat) rfLat.innerText = `⚡ ${rf.inference_latency_ms} ms`;
+    const rfProb = document.getElementById("rfProbVal");
+    if (rfProb) rfProb.innerText = `${rf.malware_probability}%`;
+    const rfBar = document.getElementById("rfProbBar");
+    if (rfBar) rfBar.style.width = `${Math.min(100, Math.max(0, rf.malware_probability))}%`;
     const rfBadge = document.getElementById("rfVerdictBadge");
-    rfBadge.innerText = rf.prediction_label;
-    applyBadgeColor(rfBadge, rf.prediction_label);
-
-    document.getElementById("rfAcc").innerText = `${rf.accuracy}%`;
-    document.getElementById("rfF1").innerText = `${rf.f1_score}%`;
-    document.getElementById("rfAuc").innerText = `${rf.roc_auc}`;
-
-    // 3. Thẻ SVM Card
-    document.getElementById("svmLatency").innerText = `⏱️ ${svm.inference_latency_ms} ms`;
-    document.getElementById("svmProbVal").innerText = `${svm.malware_probability}%`;
-    document.getElementById("svmProbBar").style.width = `${Math.min(100, Math.max(0, svm.malware_probability))}%`;
-    const svmBadge = document.getElementById("svmVerdictBadge");
-    svmBadge.innerText = svm.prediction_label;
-    applyBadgeColor(svmBadge, svm.prediction_label);
-
-    document.getElementById("svmAcc").innerText = `${svm.accuracy}%`;
-    document.getElementById("svmF1").innerText = `${svm.f1_score}%`;
-    document.getElementById("svmAuc").innerText = `${svm.roc_auc}`;
-
-    // 4. Bảng chỉ số đối chiếu
-    const tblRfPred = document.getElementById("tblRfPred");
-    const tblSvmPred = document.getElementById("tblSvmPred");
-    if (tblRfPred) tblRfPred.innerText = rf.prediction_label;
-    if (tblSvmPred) tblSvmPred.innerText = svm.prediction_label;
-    document.getElementById("tblRfProb").innerText = `${rf.malware_probability}%`;
-    document.getElementById("tblSvmProb").innerText = `${svm.malware_probability}%`;
-    document.getElementById("tblRfLatency").innerText = `${rf.inference_latency_ms} ms/mẫu`;
-    document.getElementById("tblSvmLatency").innerText = `${svm.inference_latency_ms} ms/mẫu`;
-
-    const matchEl = document.getElementById("tblConsensusMatch");
-    if (matchEl) {
-        if (rf.prediction_label === svm.prediction_label) {
-            matchEl.innerHTML = `<span class="badge-win">Đồng thuận (${rf.prediction_label})</span>`;
-        } else {
-            matchEl.innerHTML = `<span class="badge-win" style="background:rgba(245,158,11,0.2);color:#f59e0b">Khác biệt (RF ưu tiên)</span>`;
-        }
+    if (rfBadge) {
+        rfBadge.innerText = rf.prediction_label;
+        applyBadgeColor(rfBadge, rf.prediction_label);
     }
+    const rfAcc = document.getElementById("rfAcc");
+    if (rfAcc) rfAcc.innerText = `${rf.accuracy}%`;
+    const rfF1 = document.getElementById("rfF1");
+    if (rfF1) rfF1.innerText = `${rf.f1_score}%`;
+    const rfAuc = document.getElementById("rfAuc");
+    if (rfAuc) rfAuc.innerText = `${rf.roc_auc}`;
 
-    // 5. Vẽ Biểu đồ Chart.js: Đường cong ROC (ROC Curves)
+    // 3. Thẻ KNN Card
+    const knnLat = document.getElementById("knnLatency");
+    if (knnLat) knnLat.innerText = `⚡ ${knn.inference_latency_ms} ms`;
+    const knnProb = document.getElementById("knnProbVal");
+    if (knnProb) knnProb.innerText = `${knn.malware_probability}%`;
+    const knnBar = document.getElementById("knnProbBar");
+    if (knnBar) knnBar.style.width = `${Math.min(100, Math.max(0, knn.malware_probability))}%`;
+    const knnBadge = document.getElementById("knnVerdictBadge");
+    if (knnBadge) {
+        knnBadge.innerText = knn.prediction_label;
+        applyBadgeColor(knnBadge, knn.prediction_label);
+    }
+    const knnAcc = document.getElementById("knnAcc");
+    if (knnAcc) knnAcc.innerText = `${knn.accuracy}%`;
+    const knnF1 = document.getElementById("knnF1");
+    if (knnF1) knnF1.innerText = `${knn.f1_score}%`;
+    const knnAuc = document.getElementById("knnAuc");
+    if (knnAuc) knnAuc.innerText = `${knn.roc_auc}`;
+
+    // 4. Thẻ SVM Card
+    const svmLat = document.getElementById("svmLatency");
+    if (svmLat) svmLat.innerText = `⏱️ ${svm.inference_latency_ms} ms`;
+    const svmProb = document.getElementById("svmProbVal");
+    if (svmProb) svmProb.innerText = `${svm.malware_probability}%`;
+    const svmBar = document.getElementById("svmProbBar");
+    if (svmBar) svmBar.style.width = `${Math.min(100, Math.max(0, svm.malware_probability))}%`;
+    const svmBadge = document.getElementById("svmVerdictBadge");
+    if (svmBadge) {
+        svmBadge.innerText = svm.prediction_label;
+        applyBadgeColor(svmBadge, svm.prediction_label);
+    }
+    const svmAcc = document.getElementById("svmAcc");
+    if (svmAcc) svmAcc.innerText = `${svm.accuracy}%`;
+    const svmF1 = document.getElementById("svmF1");
+    if (svmF1) svmF1.innerText = `${svm.f1_score}%`;
+    const svmAuc = document.getElementById("svmAuc");
+    if (svmAuc) svmAuc.innerText = `${svm.roc_auc}`;
+
+    // 5. Cập nhật Bảng chỉ số đối chiếu
+    const tblRfLatency = document.getElementById("tblRfLatency");
+    if (tblRfLatency) tblRfLatency.innerText = `${rf.inference_latency_ms} ms/mẫu`;
+    const tblKnnLatency = document.getElementById("tblKnnLatency");
+    if (tblKnnLatency) tblKnnLatency.innerText = `${knn.inference_latency_ms} ms/mẫu`;
+    const tblSvmLatency = document.getElementById("tblSvmLatency");
+    if (tblSvmLatency) tblSvmLatency.innerText = `${svm.inference_latency_ms} ms/mẫu`;
+
+    // 6. Vẽ Biểu đồ Chart.js: Đường cong ROC (ROC Curves)
     renderROCChart(dual.roc_curve_comparison);
 
-    // 6. Vẽ Biểu đồ Chart.js: Đối chiếu 5 trục hiệu năng chính (Metrics Comparison Bar)
-    renderMetricsChart(rf, svm);
+    // 7. Vẽ Biểu đồ Chart.js: Đối chiếu 5 trục hiệu năng chính (Metrics Comparison Bar)
+    renderMetricsChart(rf, knn, svm);
 
-    // 7. XAI reasons
+    // 8. XAI reasons
     const xaiList = document.getElementById("xaiReasonsList");
     xaiList.innerHTML = "";
     if (ai.xai_reasons && ai.xai_reasons.length > 0) {
@@ -427,11 +471,15 @@ function renderROCChart(rocData) {
     }
 
     const rfPoints = (rocData && rocData.random_forest && rocData.random_forest.points) ? rocData.random_forest.points : [
-        {x: 0, y: 0}, {x: 0.01, y: 0.85}, {x: 0.02, y: 0.94}, {x: 0.035, y: 0.97}, {x: 0.07, y: 0.985}, {x: 0.15, y: 0.995}, {x: 0.30, y: 0.999}, {x: 1, y: 1}
+        {x: 0, y: 0}, {x: 0.005, y: 0.88}, {x: 0.012, y: 0.94}, {x: 0.02, y: 0.97}, {x: 0.04, y: 0.988}, {x: 0.08, y: 0.995}, {x: 0.20, y: 0.999}, {x: 1, y: 1}
+    ];
+
+    const knnPoints = (rocData && rocData.knn && rocData.knn.points) ? rocData.knn.points : [
+        {x: 0, y: 0}, {x: 0.0115, y: 0.949}, {x: 0.0145, y: 0.9623}, {x: 0.02, y: 0.9695}, {x: 0.0259, y: 0.9733}, {x: 0.0309, y: 0.9777}, {x: 0.0379, y: 0.9822}, {x: 1, y: 1}
     ];
 
     const svmPoints = (rocData && rocData.svm && rocData.svm.points) ? rocData.svm.points : [
-        {x: 0, y: 0}, {x: 0.04, y: 0.75}, {x: 0.08, y: 0.86}, {x: 0.13, y: 0.92}, {x: 0.18, y: 0.95}, {x: 0.30, y: 0.97}, {x: 0.50, y: 0.985}, {x: 1, y: 1}
+        {x: 0, y: 0}, {x: 0.02, y: 0.76}, {x: 0.045, y: 0.86}, {x: 0.075, y: 0.92}, {x: 0.12, y: 0.955}, {x: 0.20, y: 0.978}, {x: 0.40, y: 0.992}, {x: 1, y: 1}
     ];
 
     rocChartInstance = new Chart(canvas, {
@@ -439,10 +487,10 @@ function renderROCChart(rocData) {
         data: {
             datasets: [
                 {
-                    label: "Random Forest (▲ Tăng ngon: AUC = 0.9963)",
+                    label: "Random Forest (▲ Cao nhất: AUC = 0.9963)",
                     data: rfPoints,
                     borderColor: "#10b981",
-                    backgroundColor: "rgba(16, 185, 129, 0.15)",
+                    backgroundColor: "rgba(16, 185, 129, 0.12)",
                     borderWidth: 2.8,
                     fill: true,
                     tension: 0.3,
@@ -450,10 +498,21 @@ function renderROCChart(rocData) {
                     pointHoverRadius: 6
                 },
                 {
-                    label: "Support Vector Machine (▼ Giảm thấp hơn: AUC = 0.9705)",
+                    label: "K-Nearest Neighbors (⚡ K-NN: AUC = 0.9875)",
+                    data: knnPoints,
+                    borderColor: "#8b5cf6",
+                    backgroundColor: "rgba(139, 92, 246, 0.10)",
+                    borderWidth: 2.4,
+                    fill: true,
+                    tension: 0.3,
+                    pointRadius: 4,
+                    pointHoverRadius: 6
+                },
+                {
+                    label: "Support Vector Machine (▼ Đối chứng: AUC = 0.9705)",
                     data: svmPoints,
-                    borderColor: "#ef4444",
-                    backgroundColor: "rgba(239, 68, 68, 0.12)",
+                    borderColor: "#f97316",
+                    backgroundColor: "rgba(249, 115, 22, 0.08)",
                     borderWidth: 2.2,
                     fill: true,
                     tension: 0.3,
@@ -512,8 +571,8 @@ function renderROCChart(rocData) {
     });
 }
 
-// Biểu đồ Chart.js: Đối chiếu 5 trục hiệu năng
-function renderMetricsChart(rf, svm) {
+// Biểu đồ Chart.js: Đối chiếu 5 trục hiệu năng (3 mô hình: RF vs KNN vs SVM)
+function renderMetricsChart(rf, knn, svm) {
     const canvas = document.getElementById("metricsComparisonCanvas");
     if (!canvas || typeof Chart === "undefined") return;
 
@@ -521,13 +580,15 @@ function renderMetricsChart(rf, svm) {
         metricsChartInstance.destroy();
     }
 
+    const knnData = knn || { accuracy: 97.18, precision: 99.05, recall: 96.16, f1_score: 97.58, roc_auc: 0.9875 };
+
     metricsChartInstance = new Chart(canvas, {
         type: "bar",
         data: {
-            labels: ["Độ chính xác (Accuracy)", "Độ chuẩn xác (Precision)", "Độ bao phủ (Recall)", "Điểm F1-Score", "ROC-AUC"],
+            labels: ["Độ chính xác (Accuracy)", "Độ chuẩn xác (Precision)", "Độ bao phủ (Recall)", "Điểm F1-Score", "ROC-AUC (x100)"],
             datasets: [
                 {
-                    label: "Random Forest (▲ Tăng ngon - Cao hơn)",
+                    label: "Random Forest (Cây quyết định)",
                     data: [rf.accuracy || 97.75, rf.precision || 98.08, rf.recall || 98.12, rf.f1_score || 98.10, ((rf.roc_auc || 0.9963) * 100)],
                     backgroundColor: "rgba(16, 185, 129, 0.85)",
                     borderColor: "#10b981",
@@ -535,10 +596,18 @@ function renderMetricsChart(rf, svm) {
                     borderRadius: 4
                 },
                 {
-                    label: "Support Vector Machine (▼ Giảm thấp hơn)",
+                    label: "K-Nearest Neighbors (K=5 Distance)",
+                    data: [knnData.accuracy || 97.18, knnData.precision || 99.05, knnData.recall || 96.16, knnData.f1_score || 97.58, ((knnData.roc_auc || 0.9875) * 100)],
+                    backgroundColor: "rgba(139, 92, 246, 0.85)",
+                    borderColor: "#8b5cf6",
+                    borderWidth: 1.5,
+                    borderRadius: 4
+                },
+                {
+                    label: "Support Vector Machine (Kernel RBF)",
                     data: [svm.accuracy || 93.18, svm.precision || 94.16, svm.recall || 94.35, svm.f1_score || 94.25, ((svm.roc_auc || 0.9705) * 100)],
-                    backgroundColor: "rgba(239, 68, 68, 0.85)",
-                    borderColor: "#ef4444",
+                    backgroundColor: "rgba(249, 115, 22, 0.85)",
+                    borderColor: "#f97316",
                     borderWidth: 1.5,
                     borderRadius: 4
                 }

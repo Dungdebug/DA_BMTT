@@ -7,7 +7,7 @@ Recall   : 98.12%
 F1-Score : 98.10%
 ROC-AUC  : 0.9963
 Log Loss : 0.0737
-Latency  : 0.0322 ms/mẫu
+Latency  : 0.0143 ms/mẫu
 
 BÁO CÁO CHI TIẾT:
                   precision    recall  f1-score   support
